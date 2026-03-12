@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Scroll Behavior ===== */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ===== App Styles ===== */
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+button {
+  font-size: calc(10px + 2vmin);
+}
+
+/* ===== Custom Scrollbar Setup ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  /* بيبدأ شفاف تماماً */
+  background: transparent;
+  border-radius: 20px;
+  transition: background 0.3s ease;
+}
+
+/* حالة الظهور: لما نضيف كلاس scrolling-active للجسم أو لما نعمل Hover */
+body.scrolling-active::-webkit-scrollbar-thumb,
+body:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #D4AF37, #b8962e);
+}
+
+body.scrolling-active::-webkit-scrollbar-track,
+body:hover::-webkit-scrollbar-track {
+  background: rgba(226, 225, 225, 0.4); /* خلفية خفيفة */
+}
