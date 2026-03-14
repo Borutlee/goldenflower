@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiX, FiShoppingBag, FiHeart, FiMinus, FiPlus, FiArrowRight } from 'react-icons/fi';
+import { useCart } from '../Context/CartContext'
 
 const ProductModal = ({ isOpen, onClose, product }) => {
     const [activeTab, setActiveTab] = useState('Description');
@@ -25,6 +26,13 @@ const ProductModal = ({ isOpen, onClose, product }) => {
     const handleIncrement = useCallback(() => setQuantity(q => q + 1), []);
     const handleWish = useCallback(() => setWished(w => !w), []);
 
+    const { addToCart } = useCart();
+
+    const handleAddToCart = useCallback(() => {
+        addToCart(product, quantity);
+    }, [addToCart, product, quantity]);
+
+    
     if (!product) return null;
 
     const tabs = {
@@ -32,6 +40,8 @@ const ProductModal = ({ isOpen, onClose, product }) => {
         Reviews: "⭐⭐⭐⭐⭐ (4.9/5) — 'Signature scent.'",
         Details: "Top: Saffron. Heart: Amberwood."
     };
+
+
 
     return (
         <AnimatePresence>
@@ -164,7 +174,9 @@ const ProductModal = ({ isOpen, onClose, product }) => {
                                         <p className="text-2xl font-extrabold text-gray-950">${totalPrice}</p>
                                     </div>
                                     <div className="flex gap-2.5">
-                                        <button className="flex items-center gap-2 bg-black text-white px-5 py-3.5 rounded-full font-bold uppercase text-[11px] tracking-[0.2em] hover:bg-[#D4AF37] active:scale-95 transition-all duration-300 shadow-md">
+                                        <button 
+                                        onClick = {handleAddToCart}
+                                        className="flex items-center gap-2 bg-black text-white px-5 py-3.5 rounded-full font-bold uppercase text-[11px] tracking-[0.2em] hover:bg-[#D4AF37] active:scale-95 transition-all duration-300 shadow-md">
                                             <FiShoppingBag size={16} />
                                             <span>Add</span>
                                         </button>

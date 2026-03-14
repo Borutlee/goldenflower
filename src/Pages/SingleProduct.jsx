@@ -8,6 +8,7 @@ import {
 import { GiFlowerPot, GiWaterDrop, GiPerfumeBottle } from 'react-icons/gi';
 import { getProductById, getProduct } from '../Api/ProductsAPI';
 import ProductCard from '../Components/ProductCard';
+import { useCart} from '../Context/CartContext';
 
 const SIZES = ['30ml', '50ml', '100ml'];
 const NOTES = ['Floral', 'Oud', 'Amber', 'Musk'];
@@ -27,6 +28,8 @@ export default function SingleProduct() {
     const [activeTab, setActiveTab] = useState('Description');
     const [activeImg, setActiveImg] = useState(0);
     const [added, setAdded] = useState(false);
+
+    const {addToCart} = useCart();
 
     useEffect(() => {
         setLoading(true);
@@ -59,9 +62,10 @@ export default function SingleProduct() {
     const handleWish = useCallback(() => setWished(w => !w), []);
 
     const handleAddToCart = useCallback(() => {
+        addToCart(product , quantity)
         setAdded(true);
         setTimeout(() => setAdded(false), 2000);
-    }, []);
+    }, [product , quantity]);
 
     const images = product
         ? [product.image || product.img, product.image || product.img, product.image || product.img]

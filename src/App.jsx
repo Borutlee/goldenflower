@@ -5,6 +5,7 @@ import Footer from './Sections/Footer';
 import Home from './Pages/Home';
 import Products from './Pages/Products';
 import SingleProduct from './Pages/SingleProduct'; 
+import Cart from './Pages/CartPage'
 
 function App() {
   return (
@@ -15,10 +16,14 @@ function App() {
         <Route path="/Golden-Flower/" element={<Home />} />
 
         <Route path="/Golden-Flower/products" element={<Products />} />
+
+        <Route path="/Golden-Flower/Cart" element={<Cart />} />
         
         {/* ✅ Route الـ SingleProduct */}
         <Route path="/products/:id" element={<SingleProduct />} />
         <Route path="/Golden-Flower/products/:id" element={<SingleProduct />} />
+
+
       </Routes>
       <Footer />
     </div>
