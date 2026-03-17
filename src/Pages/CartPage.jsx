@@ -5,14 +5,19 @@ import { useCart } from '../Context/CartContext';
 
 export default function Cart() {
     const navigate = useNavigate();
-    const { cartItems } = useCart();
+    const { cartItems, removeFromCart, clearCart, updatequantity } = useCart();
 
     // ━━━━ هنا هتحط الـ functions بتاعتك ━━━━
-    const handleRemove = (id) => { /* TODO */ };
-    const handleIncrement = (id) => { /* TODO */ };
-    const handleDecrement = (id) => { /* TODO */ };
-    const handleClearCart = () => { /* TODO */ };
-    const totalPrice = 0; // TODO: احسبها بنفسك
+    const handleRemove = (id) => removeFromCart(id);
+    const handleIncrement = (id, quantity) => updatequantity(id, quantity + 1);
+    const handleDecrement = (id, currentQty) => {
+        if (currentQty === 1) removeFromCart(id);
+        else updatequantity(id, currentQty - 1);
+    };
+    const handleClearCart = () => clearCart();
+    const totalPrice = cartItems.reduce((acc , item) => 
+        acc + (item.product.price * item.quantity) , 0
+    ).toFixed(2); // TODO: احسبها بنفسك
 
     // ━━━━ Empty State ━━━━
     if (cartItems.length === 0) return (
@@ -112,7 +117,7 @@ export default function Cart() {
                                         {/* Quantity Controls */}
                                         <div className="flex items-center gap-1 border border-gray-100 rounded-xl bg-gray-50 p-1">
                                             <button
-                                                onClick={() => handleDecrement(item.product._id)}
+                                                onClick={() => handleDecrement(item.product._id, item.quantity)}
                                                 className="p-1.5 text-gray-400 hover:text-black transition-colors"
                                             >
                                                 <FiMinus size={11} />
@@ -121,7 +126,7 @@ export default function Cart() {
                                                 {item.quantity}
                                             </span>
                                             <button
-                                                onClick={() => handleIncrement(item.product._id)}
+                                                onClick={() => handleIncrement(item.product._id , item.quantity)}
                                                 className="p-1.5 text-gray-400 hover:text-black transition-colors"
                                             >
                                                 <FiPlus size={11} />

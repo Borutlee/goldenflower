@@ -5,6 +5,7 @@ import { MdDarkMode, MdOutlineLightMode } from "react-icons/md";
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useCart } from '../Context/CartContext'
 
 const Header = () => {
   const [dark, setdark] = useState(false);
@@ -16,6 +17,8 @@ const Header = () => {
     { label: 'About Us', to: '/about' },
     { label: 'Contact',  to: '/contact' },
   ];
+
+  const {cartItems} = useCart();
 
   return (
     <motion.header
@@ -63,10 +66,10 @@ const Header = () => {
           </button>
 
           {/* Cart */}
-          <a href="/cart" className="relative group p-1">
+          <Link to="/Golden-Flower/Cart" className="relative group p-1">
             <FaCartShopping className="text-xl sm:text-2xl text-gray-700 hover:text-[#B8860B] transition-all" />
-            <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
-          </a>
+            <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{cartItems?.length || 0}</span>
+          </Link>
 
           {/* User */}
           <div className="hidden md:block relative p-1">

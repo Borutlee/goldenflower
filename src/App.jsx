@@ -17,8 +17,8 @@ function App() {
 
         <Route path="/Golden-Flower/products" element={<Products />} />
 
-        <Route path="/Golden-Flower/Cart" element={<Cart />} />
-        
+        <Route path="/Golden-Flower/cart" element={<Cart />} />
+                
         {/* ✅ Route الـ SingleProduct */}
         <Route path="/products/:id" element={<SingleProduct />} />
         <Route path="/Golden-Flower/products/:id" element={<SingleProduct />} />
