@@ -12,13 +12,13 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
-    { label: 'Home',     to: '/' },
-    { label: 'Shop',     to: '/Golden-Flower/products' },
+    { label: 'Home', to: '/' },
+    { label: 'Shop', to: '/products' },
     { label: 'About Us', to: '/about' },
-    { label: 'Contact',  to: '/contact' },
+    { label: 'Contact', to: '/contact' },
   ];
 
-  const {cartItems} = useCart();
+  const { cartItems } = useCart();
 
   return (
     <motion.header
@@ -66,16 +66,16 @@ const Header = () => {
           </button>
 
           {/* Cart */}
-          <Link to="/Golden-Flower/Cart" className="relative group p-1">
+          <Link to="/Cart" className="relative group p-1">
             <FaCartShopping className="text-xl sm:text-2xl text-gray-700 hover:text-[#B8860B] transition-all" />
             <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{cartItems?.length || 0}</span>
           </Link>
 
           {/* User */}
           <div className="hidden md:block relative p-1">
-            <a href="/login" className="block">
+            <Link to="/Auth" className="relative group p-1">
               <FaUser className="text-xl text-gray-700 hover:text-[#B8860B] transition-all" />
-            </a>
+            </Link>
           </div>
 
           {/* Hamburger */}

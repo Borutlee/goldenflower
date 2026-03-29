@@ -31,7 +31,7 @@ export default function Cart() {
             </div>
             <motion.button
                 whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/Golden-Flower/products')}
+                onClick={() => navigate('/products')}
                 className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-[#D4AF37] transition-all duration-300"
             >
                 <FiShoppingBag size={14} />

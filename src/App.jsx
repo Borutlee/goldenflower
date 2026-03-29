@@ -6,6 +6,8 @@ import Home from './Pages/Home';
 import Products from './Pages/Products';
 import SingleProduct from './Pages/SingleProduct'; 
 import Cart from './Pages/CartPage'
+import Auth from './Pages/Auth'
+import About from './Pages/About'
 
 function App() {
   return (
@@ -15,9 +17,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/Golden-Flower/" element={<Home />} />
 
-        <Route path="/Golden-Flower/products" element={<Products />} />
+        <Route path="/products" element={<Products />} />
 
-        <Route path="/Golden-Flower/cart" element={<Cart />} />
+        <Route path="/cart" element={<Cart />} />
+
+        <Route path="/about" element={<About />} />
+        
+        <Route path="/Auth" element={<Auth />} />
                 
         {/* ✅ Route الـ SingleProduct */}
         <Route path="/products/:id" element={<SingleProduct />} />
