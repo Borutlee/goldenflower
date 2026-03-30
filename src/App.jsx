@@ -4,12 +4,18 @@ import Navbar from './Sections/Navbar';
 import Footer from './Sections/Footer';
 import Home from './Pages/Home';
 import Products from './Pages/Products';
-import SingleProduct from './Pages/SingleProduct'; 
+import SingleProduct from './Pages/SingleProduct';
 import Cart from './Pages/CartPage'
 import Auth from './Pages/Auth'
 import About from './Pages/About'
+import Contact from './Pages/contact'
 
 function App() {
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="App scroll-smooth">
       <Navbar />
@@ -22,9 +28,11 @@ function App() {
         <Route path="/cart" element={<Cart />} />
 
         <Route path="/about" element={<About />} />
-        
+
+        <Route path="/contact" element={<Contact />} />
+
         <Route path="/Auth" element={<Auth />} />
-                
+
         {/* ✅ Route الـ SingleProduct */}
         <Route path="/products/:id" element={<SingleProduct />} />
         <Route path="/Golden-Flower/products/:id" element={<SingleProduct />} />

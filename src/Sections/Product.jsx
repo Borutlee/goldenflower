@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../Components/ProductCard';
+import { useNavigate } from 'react-router-dom';
+
 
 const Products = () => {
   const [category, setCategory] = useState('MEN');
+  const navigate = useNavigate();
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -93,6 +97,7 @@ const Products = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
+            onClick = {() => navigate('/products')}
             className="px-14 py-4 rounded-xl bg-black text-[#D4AF37] border-2 border-[#D4AF37] font-bold text-[12px] uppercase tracking-[0.3em] transition-all duration-300 hover:bg-[#D4AF37] hover:text-black shadow-xl"
           >
             View All Collections
