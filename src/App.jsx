@@ -8,7 +8,7 @@ import SingleProduct from './Pages/SingleProduct';
 import Cart from './Pages/CartPage'
 import Auth from './Pages/Auth'
 import About from './Pages/About'
-import Contact from './Pages/contact'
+import Contact from './Pages/Contact'
 
 function App() {
 
