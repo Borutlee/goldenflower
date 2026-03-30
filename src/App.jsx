@@ -8,13 +8,15 @@ import SingleProduct from './Pages/SingleProduct';
 import Cart from './Pages/CartPage'
 import Auth from './Pages/Auth'
 import About from './Pages/About'
-import Contact from './Pages/Contact'
+import Contact from './Pages/contact'
+import ScrollToTop from './Components/scrollToTop';
 
 function App() {
 
 
   return (
     <div className="App scroll-smooth">
+      <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
