@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { FiStar, FiArrowRight, FiEye } from "react-icons/fi";
 import { GiFlowerPot, GiWaterDrop } from "react-icons/gi";
 import { useState, useCallback, memo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ للتنقل لصفحة المنتج
+import { useNavigate } from 'react-router-dom';
 import ProductModal from './ProductModel';
 
 function useInView(options = {}) {
@@ -31,12 +31,10 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
 
     const [isOpen, setOpen] = useState(false);
     const [ref, isInView] = useInView();
-    const navigate = useNavigate(); // ✅
+    const navigate = useNavigate();
 
     const handleOpen = useCallback(() => setOpen(true), []);
     const handleClose = useCallback(() => setOpen(false), []);
-
-    // ✅ بيودي على صفحة المنتج
     const handleNavigate = useCallback(() => {
         navigate(`/products/${product._id}`);
     }, [navigate, product._id]);
@@ -64,10 +62,11 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                     ease: "easeOut"
                 }}
             >
-                <div className="group bg-white border border-gray-300 p-3 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:-translate-y-2">
+                {/* ✅ الكارت نفسه */}
+                <div className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-3 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2">
 
                     {/* Image Container */}
-                    <div className="relative h-64 sm:h-64 lg:h-72 rounded-[1.2rem] sm:rounded-[2rem] overflow-hidden bg-[#f9f9f9] dark:bg-zinc-800/50 mb-4 sm:mb-6 isolation-isolate">
+                    <div className="relative h-64 sm:h-64 lg:h-72 rounded-[1.2rem] sm:rounded-[2rem] overflow-hidden bg-gray-50 dark:bg-zinc-800 mb-4 sm:mb-6 isolation-isolate">
                         <motion.img
                             loading="lazy"
                             whileHover={{ scale: 1.1 }}
@@ -80,12 +79,12 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                         {/* Rating Badge */}
                         <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
                             <FiStar className="text-[#D4AF37] fill-[#D4AF37]" size={10} />
-                            <span className="text-[10px] font-bold dark:text-white">
+                            <span className="text-[10px] font-bold text-gray-800 dark:text-white">
                                 {product.rating || "4.9"}
                             </span>
                         </div>
 
-                        {/* Eye Button - بيفتح الـ Modal */}
+                        {/* Eye Button */}
                         <motion.button
                             onClick={handleOpen}
                             whileHover={{ scale: 1.1 }}
@@ -94,7 +93,7 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                         >
                             <FiEye
                                 size={11}
-                                className="text-gray-500 group-hover/eye:text-white transition-colors duration-300"
+                                className="text-gray-500 dark:text-gray-300 group-hover/eye:text-white transition-colors duration-300"
                             />
                         </motion.button>
                     </div>
@@ -107,37 +106,37 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                             {product.category || "Signature Scent"}
                         </h3>
 
-                        {/* Name */}
-                        <h2 className="text-gray-900 dark:text-black text-base sm:text-xl font-serif mb-1.5 sm:mb-2 italic">
+                        {/* ✅ Name - كان dark:text-black غلط */}
+                        <h2 className="text-gray-900 dark:text-white text-base sm:text-xl font-serif mb-1.5 sm:mb-2 italic transition-colors duration-300">
                             {product.title || product.name}
                         </h2>
 
-                        {/* Notes */}
+                        {/* ✅ Notes - كان dark:text-black-500 غلط */}
                         <div className="flex justify-center gap-3 sm:gap-4 mb-3 sm:mb-4 opacity-70">
                             <div className="flex items-center gap-1">
                                 <GiFlowerPot className="text-[#D4AF37]" size={12} />
-                                <span className="text-[11px] sm:text-[13px] uppercase tracking-widest dark:text-black-500">
+                                <span className="text-[11px] sm:text-[13px] uppercase tracking-widest text-gray-600 dark:text-gray-400 transition-colors duration-300">
                                     {product.notes?.[0] ?? "Floral"}
                                 </span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <GiWaterDrop className="text-[#D4AF37]" size={12} />
-                                <span className="text-[11px] sm:text-[13px] uppercase tracking-widest dark:text-black-500">
+                                <span className="text-[11px] sm:text-[13px] uppercase tracking-widest text-gray-600 dark:text-gray-400 transition-colors duration-300">
                                     {product.notes?.[1] ?? "Oud"}
                                 </span>
                             </div>
                         </div>
 
                         {/* Price */}
-                        <p className="text-gray-900 dark:text-[#D4AF37] font-bold text-base sm:text-lg mb-3 sm:mb-5">
+                        <p className="text-gray-900 dark:text-[#D4AF37] font-bold text-base sm:text-lg mb-3 sm:mb-5 transition-colors duration-300">
                             ${product.price}
                         </p>
 
-                        {/* ✅ Action Button - بيودي على صفحة المنتج */}
+                        {/* Action Button */}
                         <motion.button
                             whileHover="hover"
                             whileTap={{ scale: 0.98 }}
-                            className="relative w-full mt-2 sm:mt-4 py-2.5 sm:py-3 rounded-lg border border-black dark:border-[#D4AF37] bg-transparent text-black dark:text-[#D4AF37] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] overflow-hidden group"
+                            className="relative w-full mt-2 sm:mt-4 py-2.5 sm:py-3 rounded-lg border border-black dark:border-[#D4AF37] bg-transparent text-black dark:text-[#D4AF37] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] overflow-hidden group transition-colors duration-300"
                             onClick={handleNavigate}
                         >
                             <motion.div
@@ -147,7 +146,7 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                                 className="absolute inset-0 bg-[#D4AF37] z-0"
                             />
                             <div className="relative z-10 flex items-center justify-center gap-2 group-hover:text-black transition-colors duration-500">
-                                View Details {/* ✅ اسم أوضح من "Explore Scent" */}
+                                View Details
                                 <FiArrowRight
                                     className="opacity-70 group-hover:translate-x-1 transition-transform duration-500"
                                     size={13}

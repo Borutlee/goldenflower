@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import ProductCard from '../Components/ProductCard'; // تأكد من مسار الملف
+import ProductCard from '../Components/ProductCard';
 
 const BestSellers = () => {
     const perfumes = [
@@ -27,45 +27,42 @@ const BestSellers = () => {
     ];
 
     return (
-        <section className="text-gray-600 body-font bg-[#fafafa] py-24 overflow-hidden">
+        <section className="body-font bg-[#fafafa] dark:bg-[#0e0e0e] transition-colors duration-300 py-24 overflow-hidden">
             <div className="container px-5 mx-auto">
 
-                {/* Header Section */}
-                <motion.div 
+                {/* Header */}
+                <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
                     className="flex flex-col text-center w-full mb-16"
                 >
-                    <h2 className="text-xs text-[#D4AF37] tracking-[0.3em] font-bold title-font mb-2 uppercase">Signature Collection</h2>
-                    <h1 className="sm:text-4xl text-3xl font-black title-font text-gray-900 tracking-tight">
+                    <h2 className="text-xs text-[#D4AF37] tracking-[0.3em] font-bold mb-2 uppercase">
+                        Signature Collection
+                    </h2>
+                    <h1 className="sm:text-4xl text-3xl font-black text-gray-900 dark:text-white tracking-tight transition-colors duration-300">
                         BEST <span className="text-[#D4AF37]">PERFUMES</span>
                     </h1>
                     <div className="flex mt-3 justify-center">
-                        <div className="w-12 h-[2px] rounded-full bg-[#D4AF37] inline-flex"></div>
+                        <div className="w-12 h-[2px] rounded-full bg-[#D4AF37]" />
                     </div>
                 </motion.div>
 
-                {/* تعديل الجريد هنا: 
-                    بما إن عندك 3 منتجات بس في الداتا، خليناها lg:grid-cols-3
-                    لو هتزود منتج رابع خليها lg:grid-cols-4
-                */}
+                {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                     {perfumes.map((perfume, index) => (
-                        <motion.div 
-                            key={perfume.id} 
+                        <motion.div
+                            key={perfume.id}
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, margin: "-50px" }}
                             transition={{ duration: 0.6, delay: index * 0.15 }}
                         >
-                            {/* استدعاء الكارت */}
-                            <ProductCard product={perfume} size = {14} />
+                            <ProductCard product={perfume} size={14} />
                         </motion.div>
                     ))}
                 </div>
-
             </div>
         </section>
     );

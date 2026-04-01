@@ -1,15 +1,73 @@
 import { getProduct } from "../Api/ProductsAPI";
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import ProductCard from "../Components/ProductCard";
 import ProductCardSkeleton from "../Components/ProductCardSkeleton";
+import Select from 'react-select'; // استيراد المكتبة الجديدة
 
 const PRODUCT_NOTES = ["Floral", "Luxury"];
+
+// خيارات الترتيب (Options)
+const sortOptions = [
+    { value: '', label: 'Default' },
+    { value: 'high-to-low', label: 'Price: High to Low' },
+    { value: 'low-to-high', label: 'Price: Low to High' },
+];
 
 function Products() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [sort, setSort] = useState('');
+
+    // تصميم مخصص للـ Select ليتناسب مع الـ Dark Mode والـ UI بتاعك
+    const customStyles = {
+        control: (base, state) => ({
+            ...base,
+            background: "#1f2937", // bg-gray-800
+            borderColor: state.isFocused ? "#D4AF37" : "#374151", // ذهبي عند التركيز
+            borderRadius: "0.75rem", // rounded-xl
+            padding: "2px",
+            boxShadow: "none",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            "&:hover": { borderColor: "#D4AF37" }
+        }),
+        menu: (base) => ({
+            ...base,
+            background: "#1f2937",
+            borderRadius: "0.75rem",
+            overflow: "hidden",
+            zIndex: 50
+        }),
+        option: (base, state) => ({
+            ...base,
+            background: state.isSelected ? "#D4AF37" : state.isFocused ? "#374151" : "transparent",
+            color: state.isSelected ? "white" : "#d1d5db",
+            cursor: "pointer",
+            fontSize: "12px",
+            fontFamily: "serif",
+            "&:active": { background: "#D4AF37" }
+        }),
+        singleValue: (base) => ({
+            ...base,
+            color: "#D4AF37", // النص المختار باللون الذهبي
+            fontStyle: "italic",
+            fontSize: "12px",
+            fontFamily: "serif"
+        }),
+        placeholder: (base) => ({
+            ...base,
+            color: "#9ca3af",
+            fontSize: "12px",
+            fontFamily: "serif"
+        }),
+        indicatorSeparator: () => ({ display: 'none' }), // إخفاء الخط الفاصل الصغير
+        dropdownIndicator: (base) => ({
+            ...base,
+            color: "#D4AF37",
+            "&:hover": { color: "#D4AF37" }
+        })
+    };
 
     const alloptions = useMemo(() => {
         const categorylist = products.map(item => item.category);
@@ -29,18 +87,11 @@ function Products() {
         });
     }, [products, selectedCategory, sort]);
 
-    const handleCategoryChange = useCallback((cat) => {
-        setSelectedCategory(cat);
-    }, []);
-
-    const handleSortChange = useCallback((e) => {
-        setSort(e.target.value);
-    }, []);
+    const handleCategoryChange = useCallback((cat) => setSelectedCategory(cat), []);
 
     useEffect(() => {
         getProduct()
             .then(res => {
-                // ✅ الـ API بيرجع الـ array مباشرة مش في .data
                 setProducts(res);
                 setLoading(false);
             })
@@ -51,13 +102,17 @@ function Products() {
     }, []);
 
     return (
-        <div className="bg-gray-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div className="bg-gray-50 dark:bg-[#121212] min-h-screen py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
 
             {/* Header */}
             <div className="text-center mb-16">
-                <h1 className="text-4xl font-serif font-bold text-gray-900 mb-2">Our Collection</h1>
-                <div className="h-1 w-20 bg-yellow-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600 italic">Handpicked flowers and fashion for your golden moments</p>
+                <h1 className="text-4xl font-serif font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
+                    Our Collection
+                </h1>
+                <div className="h-1 w-20 bg-yellow-600 mx-auto" />
+                <p className="mt-4 text-gray-600 dark:text-gray-400 italic transition-colors duration-300">
+                    Handpicked flowers and fashion for your golden moments
+                </p>
             </div>
 
             {/* Filters */}
@@ -78,7 +133,7 @@ function Products() {
                                     className={`py-2 px-4 rounded-full border text-[12px] tracking-widest capitalize transition-all duration-200
                                         ${isActive
                                             ? "bg-yellow-600 text-white border-yellow-600"
-                                            : "bg-transparent text-gray-500 border-gray-300 hover:border-gray-400 hover:text-gray-700"
+                                            : "bg-transparent text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                                         }`}
                                 >
                                     {cat}
@@ -88,26 +143,21 @@ function Products() {
                     </div>
                 </div>
 
-                {/* Sort By */}
+                {/* Sort By - تم التعديل هنا */}
                 <div className="relative w-full sm:w-64">
                     <label className="block text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-2 ml-1 font-bold">
                         Sort By
                     </label>
-                    <select
-                        onChange={handleSortChange}
-                        className="w-full bg-white border border-gray-200 text-gray-800 py-3 px-4 pr-8 rounded-xl 
-                            appearance-none cursor-pointer focus:outline-none focus:border-[#D4AF37] 
-                            transition-all duration-300 text-xs font-serif italic tracking-wider shadow-sm hover:shadow-md"
-                    >
-                        <option value="">Default</option>
-                        <option value="high-to-low">Price: High to Low</option>
-                        <option value="low-to-high">Price: Low to High</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-6 text-[#D4AF37]">
-                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                        </svg>
-                    </div>
+                    <Select
+                        options={sortOptions}
+                        defaultValue={sortOptions[0]}
+                        onChange={(selected) => setSort(selected.value)}
+                        styles={customStyles}
+                        isSearchable={false}
+                        placeholder="Select Sort"
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                    />
                 </div>
 
             </div>

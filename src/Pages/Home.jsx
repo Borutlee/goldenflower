@@ -6,13 +6,13 @@ import Products from '../Sections/Product';
 
 const Home = () => {
     return (
-        <> {/* لازم القوس الفاضي ده أو div يلم كل السكاشن */}
+        <div className="min-h-screen bg-white text-black dark:bg-slate-900 dark:text-gray-100 transition-colors duration-300">
             <Hero />
             <BestSellers />
             <Feature />
             <Cta />
             <Products />
-        </>
+        </div>
     );
 };
 export default Home;

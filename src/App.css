@@ -7,6 +7,11 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ================ */
+body {
+  @apply bg-white dark:bg-[#121212] text-gray-900 dark:text-gray-300 transition-colors duration-300;
+}
+
 /* ===== App Styles ===== */
 .App {
   text-align: center;

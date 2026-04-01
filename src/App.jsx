@@ -10,12 +10,14 @@ import Auth from './Pages/Auth'
 import About from './Pages/About'
 import Contact from './Pages/Contact'
 import ScrollToTop from './Components/scrollToTop';
+import { useTheme } from './Context/ThemeContext'
 
 function App() {
 
+  const { isDark } = useTheme();
 
   return (
-    <div className="App scroll-smooth">
+    <div className={`App scroll-smooth ${isDark ? 'dark' : ''}`}>
       <ScrollToTop />
       <Navbar />
       <Routes>
