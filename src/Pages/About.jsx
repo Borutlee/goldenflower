@@ -40,12 +40,12 @@ export default function About() {
     const navigate = useNavigate();
 
     return (
-        <div className="bg-gray-50 min-h-screen">
+        <div className="bg-white dark:bg-[#121212] min-h-screen transition-colors duration-300">
 
             {/* ━━━━ Hero ━━━━ */}
-            <section className="relative bg-gray-900 overflow-hidden">
-                {/* Decorative */}
-                <div className="absolute inset-0 opacity-5">
+            <section className="relative bg-gray-900 overflow-hidden py-20 sm:py-28">
+                {/* Decorative Flowers */}
+                <div className="absolute inset-0 opacity-10 dark:opacity-20 pointer-events-none">
                     {[...Array(6)].map((_, i) => (
                         <IoFlowerOutline
                             key={i}
@@ -60,7 +60,7 @@ export default function About() {
                     ))}
                 </div>
 
-                <div className="relative max-w-4xl mx-auto px-6 py-28 text-center">
+                <div className="relative max-w-4xl mx-auto px-6 text-center">
                     <motion.div
                         variants={fadeUp}
                         initial="hidden"
@@ -82,7 +82,7 @@ export default function About() {
             </section>
 
             {/* ━━━━ Stats ━━━━ */}
-            <section className="bg-white border-b border-gray-100">
+            <section className="bg-white dark:bg-[#1A1A1A] border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
                 <div className="max-w-4xl mx-auto px-6 py-12 grid grid-cols-3 gap-6">
                     {STATS.map((s, i) => (
                         <motion.div
@@ -94,18 +94,22 @@ export default function About() {
                             custom={i}
                             className="text-center"
                         >
-                            <p className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-1">{s.number}</p>
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold">{s.label}</p>
+                            <p className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-1 transition-colors">
+                                {s.number}
+                            </p>
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold">
+                                {s.label}
+                            </p>
                         </motion.div>
                     ))}
                 </div>
             </section>
 
             {/* ━━━━ Story ━━━━ */}
-            <section className="max-w-4xl mx-auto px-6 py-20">
+            <section className="max-w-5xl mx-auto px-6 py-20">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
 
-                    {/* Image placeholder */}
+                    {/* Image */}
                     <motion.div
                         variants={fadeUp}
                         initial="hidden"
@@ -113,23 +117,23 @@ export default function About() {
                         viewport={{ once: true }}
                         className="relative"
                     >
-                        <div className="aspect-[4/5] rounded-[2rem] overflow-hidden bg-gray-200 relative">
+                        <div className="aspect-[4/5] rounded-[2rem] overflow-hidden bg-gray-200 dark:bg-gray-800 relative shadow-2xl">
                             <img
                                 src="https://images.pexels.com/photos/1631181/pexels-photo-1631181.jpeg?auto=compress&cs=tinysrgb&w=800"
                                 alt="Golden Flower"
                                 className="w-full h-full object-cover"
                             />
-                            {/* Gold accent */}
-                            <div className="absolute bottom-6 left-6 bg-white/95 backdrop-blur-sm px-4 py-3 rounded-2xl">
+                            {/* Gold accent box */}
+                            <div className="absolute bottom-6 left-6 bg-white/95 dark:bg-[#1A1A1A]/95 backdrop-blur-sm px-4 py-3 rounded-2xl border border-transparent dark:border-gray-800 transition-colors">
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">Est. 2024</p>
-                                <p className="text-sm font-serif italic text-gray-800">Cairo, Egypt</p>
+                                <p className="text-sm font-serif italic text-gray-800 dark:text-gray-200">Cairo, Egypt</p>
                             </div>
                         </div>
-                        {/* Decorative box */}
+                        {/* Decorative background box */}
                         <div className="absolute -bottom-4 -right-4 w-24 h-24 border-2 border-[#D4AF37]/30 rounded-2xl -z-10" />
                     </motion.div>
 
-                    {/* Text */}
+                    {/* Text Section */}
                     <motion.div
                         variants={fadeUp}
                         initial="hidden"
@@ -138,11 +142,11 @@ export default function About() {
                         custom={1}
                     >
                         <p className="text-[#D4AF37] text-[11px] font-black uppercase tracking-[0.3em] mb-4">Who We Are</p>
-                        <h2 className="text-3xl font-serif italic text-gray-900 mb-4 leading-tight">
+                        <h2 className="text-3xl font-serif italic text-gray-900 dark:text-white mb-4 leading-tight transition-colors">
                             A small team with a big vision
                         </h2>
                         <div className="h-px w-10 bg-[#D4AF37] mb-6" />
-                        <div className="flex flex-col gap-4 text-gray-500 text-sm leading-relaxed">
+                        <div className="flex flex-col gap-4 text-gray-500 dark:text-gray-400 text-sm leading-relaxed transition-colors">
                             <p>
                                 We started Golden Flower because we were tired of choosing between quality and affordability. We believed there had to be a better way — and so we built it.
                             </p>
@@ -158,7 +162,7 @@ export default function About() {
             </section>
 
             {/* ━━━━ Values ━━━━ */}
-            <section className="bg-white py-20">
+            <section className="bg-white dark:bg-[#1A1A1A] py-20 transition-colors duration-300">
                 <div className="max-w-4xl mx-auto px-6">
                     <motion.div
                         variants={fadeUp}
@@ -168,7 +172,7 @@ export default function About() {
                         className="text-center mb-14"
                     >
                         <p className="text-[#D4AF37] text-[11px] font-black uppercase tracking-[0.3em] mb-3">What We Stand For</p>
-                        <h2 className="text-3xl font-serif italic text-gray-900">Our Values</h2>
+                        <h2 className="text-3xl font-serif italic text-gray-900 dark:text-white transition-colors">Our Values</h2>
                         <div className="h-px w-10 bg-[#D4AF37] mx-auto mt-3" />
                     </motion.div>
 
@@ -181,11 +185,11 @@ export default function About() {
                                 whileInView="visible"
                                 viewport={{ once: true }}
                                 custom={i}
-                                className="bg-gray-50 rounded-[1.5rem] p-6 border border-gray-100"
+                                className="bg-gray-50 dark:bg-[#242424] rounded-[1.5rem] p-6 border border-gray-100 dark:border-gray-800 transition-all duration-300 hover:shadow-xl dark:hover:shadow-black/40"
                             >
                                 <span className="text-2xl text-[#D4AF37] block mb-4">{v.icon}</span>
-                                <h3 className="font-serif italic text-gray-900 text-lg mb-2">{v.title}</h3>
-                                <p className="text-gray-400 text-sm leading-relaxed">{v.desc}</p>
+                                <h3 className="font-serif italic text-gray-900 dark:text-white text-lg mb-2 transition-colors">{v.title}</h3>
+                                <p className="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">{v.desc}</p>
                             </motion.div>
                         ))}
                     </div>
@@ -201,16 +205,16 @@ export default function About() {
                     viewport={{ once: true }}
                 >
                     <IoFlowerOutline className="text-4xl text-[#D4AF37] mx-auto mb-6" />
-                    <h2 className="text-3xl font-serif italic text-gray-900 mb-3">
+                    <h2 className="text-3xl font-serif italic text-gray-900 dark:text-white mb-3 transition-colors">
                         Ready to explore?
                     </h2>
-                    <p className="text-gray-400 text-sm mb-8">
+                    <p className="text-gray-400 dark:text-gray-500 text-sm mb-8">
                         Discover our curated collection — handpicked for your golden moments.
                     </p>
                     <motion.button
                         whileTap={{ scale: 0.97 }}
                         onClick={() => navigate('/products')}
-                        className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-full font-bold uppercase text-[11px] tracking-[0.2em] hover:bg-[#D4AF37] transition-all duration-300 group"
+                        className="inline-flex items-center gap-2 bg-gray-900 dark:bg-yellow-600 text-white px-8 py-4 rounded-full font-bold uppercase text-[11px] tracking-[0.2em] hover:bg-[#D4AF37] dark:hover:bg-yellow-500 transition-all duration-300 group shadow-lg dark:shadow-black/30"
                     >
                         Shop the Collection
                         <FiArrowRight size={13} className="group-hover:translate-x-1 transition-transform duration-300" />

@@ -48,7 +48,6 @@ export default function Contact() {
 
     const handleSubmit = useCallback((e) => {
         e.preventDefault();
-        // TODO: ربط بـ emailjs أو Backend
         console.log('form:', form);
         setSent(true);
         setTimeout(() => setSent(false), 4000);
@@ -56,10 +55,11 @@ export default function Contact() {
     }, [form]);
 
     return (
-        <div className="bg-gray-50 min-h-screen">
+        // الخلفية الأساسية للموقع (Dark Mode)
+        <div className="bg-white dark:bg-[#121212] min-h-screen transition-colors duration-300">
 
             {/* ━━━━ Hero ━━━━ */}
-            <section className="bg-white border-b border-gray-100 py-16 text-center px-4">
+            <section className="bg-white dark:bg-[#1A1A1A] border-b border-gray-100 dark:border-gray-800 py-16 text-center px-4 transition-colors duration-300">
                 <motion.div
                     variants={fadeUp}
                     initial="hidden"
@@ -67,9 +67,11 @@ export default function Contact() {
                 >
                     <IoFlowerOutline className="text-4xl text-[#D4AF37] mx-auto mb-5" />
                     <p className="text-[#D4AF37] text-[11px] font-black uppercase tracking-[0.4em] mb-3">Get In Touch</p>
-                    <h1 className="text-4xl sm:text-5xl font-serif italic text-gray-900 mb-3">We'd love to hear from you</h1>
+                    <h1 className="text-4xl sm:text-5xl font-serif italic text-gray-900 dark:text-white mb-3 transition-colors duration-300">
+                        We'd love to hear from you
+                    </h1>
                     <div className="h-px w-14 bg-[#D4AF37] mx-auto mb-4" />
-                    <p className="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">
+                    <p className="text-gray-400 dark:text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
                         Have a question, a suggestion, or just want to say hi? We're always happy to connect.
                     </p>
                 </motion.div>
@@ -89,15 +91,15 @@ export default function Contact() {
                             whileInView="visible"
                             viewport={{ once: true }}
                             custom={i}
-                            className="bg-white rounded-[1.5rem] border border-gray-100 p-5 flex items-start gap-4"
+                            className="bg-white dark:bg-[#1A1A1A] rounded-[1.5rem] border border-gray-100 dark:border-gray-800 p-5 flex items-start gap-4 shadow-sm transition-all"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-[#D4AF37] flex-shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center text-[#D4AF37] flex-shrink-0">
                                 {item.icon}
                             </div>
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-0.5">{item.label}</p>
-                                <p className="text-sm font-bold text-gray-800">{item.value}</p>
-                                <p className="text-xs text-gray-400 mt-0.5">{item.sub}</p>
+                                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{item.value}</p>
+                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{item.sub}</p>
                             </div>
                         </motion.div>
                     ))}
@@ -109,14 +111,14 @@ export default function Contact() {
                         whileInView="visible"
                         viewport={{ once: true }}
                         custom={3}
-                        className="bg-white rounded-[1.5rem] border border-gray-100 p-5"
+                        className="bg-white dark:bg-[#1A1A1A] rounded-[1.5rem] border border-gray-100 dark:border-gray-800 p-5 shadow-sm transition-all"
                     >
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Follow Us</p>
                         <div className="flex gap-3">
                             {SOCIALS.map(s => (
                                 <button
                                     key={s.label}
-                                    className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-[#D4AF37] hover:border-[#D4AF37] transition-all duration-300"
+                                    className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:text-[#D4AF37] dark:hover:text-[#D4AF37] hover:border-[#D4AF37] dark:hover:border-[#D4AF37] transition-all duration-300"
                                 >
                                     {s.icon}
                                 </button>
@@ -132,9 +134,9 @@ export default function Contact() {
                     whileInView="visible"
                     viewport={{ once: true }}
                     custom={1}
-                    className="lg:col-span-3 bg-white rounded-[2rem] border border-gray-100 p-7 sm:p-10"
+                    className="lg:col-span-3 bg-white dark:bg-[#1A1A1A] rounded-[2rem] border border-gray-100 dark:border-gray-800 p-7 sm:p-10 shadow-sm transition-all"
                 >
-                    <h2 className="text-2xl font-serif italic text-gray-900 mb-1">Send a Message</h2>
+                    <h2 className="text-2xl font-serif italic text-gray-900 dark:text-white mb-1 transition-colors">Send a Message</h2>
                     <div className="h-px w-10 bg-[#D4AF37] mb-7" />
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -150,7 +152,7 @@ export default function Contact() {
                                     onChange={handleChange}
                                     placeholder="Your name"
                                     required
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:border-[#D4AF37] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all"
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
@@ -162,7 +164,7 @@ export default function Contact() {
                                     onChange={handleChange}
                                     placeholder="Your email"
                                     required
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all"
+                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:border-[#D4AF37] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all"
                                 />
                             </div>
                         </div>
@@ -177,7 +179,7 @@ export default function Contact() {
                                 onChange={handleChange}
                                 placeholder="What's this about?"
                                 required
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all"
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:border-[#D4AF37] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all"
                             />
                         </div>
 
@@ -191,18 +193,18 @@ export default function Contact() {
                                 placeholder="Tell us anything..."
                                 required
                                 rows={5}
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all resize-none"
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:border-[#D4AF37] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/20 transition-all resize-none"
                             />
                         </div>
 
-                        {/* Submit */}
+                        {/* Submit Button */}
                         <motion.button
                             whileTap={{ scale: 0.97 }}
                             type="submit"
                             className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 mt-2 group
                                 ${sent
                                     ? 'bg-green-500 text-white'
-                                    : 'bg-gray-900 text-white hover:bg-[#D4AF37]'
+                                    : 'bg-gray-900 dark:bg-yellow-600 text-white hover:bg-[#D4AF37] dark:hover:bg-yellow-500 shadow-lg shadow-black/20'
                                 }`}
                         >
                             {sent ? (
