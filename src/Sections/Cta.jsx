@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
+
 
 const CTA = () => {
   const fadeInUp = {
@@ -6,6 +8,8 @@ const CTA = () => {
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true }
   };
+
+  const navigate = useNavigate();
 
   return (
     <section className="relative py-24 px-4 md:px-10 bg-transparent">
@@ -63,13 +67,13 @@ const CTA = () => {
                   transition: { duration: 0.2, ease: "easeOut" }
                 }}
                 whileTap={{ scale: 0.97 }}
-                href="#register"
+                onClick = {() => navigate('/Auth')}
                 className="group relative overflow-hidden bg-[#D4AF37] text-white 
                     px-12 py-4 rounded-full font-bold uppercase 
                     tracking-widest text-xs
                     shadow-lg shadow-[#D4AF37]/20
                     hover:shadow-[0_10px_40px_rgba(212,175,55,0.5)]
-                    transition-shadow duration-200"
+                    transition-shadow duration-200 cursor-pointer"
                   >
                 <span className="relative z-10">Create Account</span>
 
@@ -89,10 +93,10 @@ const CTA = () => {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.8 }}
-                href="#login"
+                onClick = {() => navigate('/Auth')}
                 className="text-zinc-500 text-[10px] uppercase tracking-[0.3em] 
                             hover:text-[#D4AF37] transition-colors 
-                            border-b border-transparent hover:border-[#D4AF37] pb-1"
+                            border-b border-transparent hover:border-[#D4AF37] pb-1 cursor-pointer"
               >
                 Already have an account? Sign In
               </motion.a>

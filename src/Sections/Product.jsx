@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../Components/ProductCard';
+import { getProduct } from '../Api/ProductsAPI';
 import { useNavigate } from 'react-router-dom';
 
 const Products = () => {
-    const [category, setCategory] = useState('MEN');
+    const [category, setCategory] = useState('women');
+    const [allProducts, setAllProducts] = useState({ women: [], men: [] });
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     const containerVariants = {
@@ -15,20 +18,27 @@ const Products = () => {
         },
     };
 
-    const allProducts = {
-        MEN: [
-            { id: 1, name: "Mystic Oud", price: "210.00", rating: "4.9", notes: ["Oud", "Leather"], img: "https://dummyimage.com/500x700/000/fff&text=Mystic+Oud" },
-            { id: 2, name: "Royal Leather", price: "195.00", rating: "4.8", notes: ["Amber", "Smoke"], img: "https://dummyimage.com/500x700/000/fff&text=Royal+Leather" },
-            { id: 3, name: "Desert Sand", price: "180.00", rating: "4.7", notes: ["Sand", "Spices"], img: "https://dummyimage.com/500x700/000/fff&text=Desert+Sand" },
-            { id: 4, name: "Silver Birch", price: "165.00", rating: "4.9", notes: ["Wood", "Citrus"], img: "https://dummyimage.com/500x700/000/fff&text=Silver+Birch" },
-        ],
-        WOMEN: [
-            { id: 5, name: "Golden Lily", price: "220.00", rating: "5.0", notes: ["Lily", "Musk"], img: "https://dummyimage.com/500x700/000/fff&text=Golden+Lily" },
-            { id: 6, name: "Rose Velvet", price: "185.00", rating: "4.9", notes: ["Rose", "Vanilla"], img: "https://dummyimage.com/500x700/000/fff&text=Rose+Velvet" },
-            { id: 7, name: "Night Jasmine", price: "210.00", rating: "4.8", notes: ["Jasmine", "Mint"], img: "https://dummyimage.com/500x700/000/fff&text=Night+Jasmine" },
-            { id: 8, name: "Vanilla Sky", price: "175.00", rating: "4.7", notes: ["Vanilla", "Sugar"], img: "https://dummyimage.com/500x700/000/fff&text=Vanilla+Sky" },
-        ]
-    };
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const products = await getProduct();
+
+                // بنفصل المنتجات حسب الـ category
+                setAllProducts({
+                    women: products.filter(p => p.category === 'women').slice(0, 4),
+                    men: products.filter(p => p.category === 'men').slice(0, 4),
+                });
+            } catch (error) {
+                console.error("Failed to fetch products:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
+    const tabs = ['women', 'men'];
 
     return (
         <section className="py-24 bg-white dark:bg-[#121212] transition-colors duration-300 overflow-hidden">
@@ -50,11 +60,11 @@ const Products = () => {
                     </h2>
 
                     <div className="flex gap-10 border-b border-gray-100 dark:border-gray-800 w-full max-w-xs justify-center transition-colors duration-300">
-                        {['MEN', 'WOMEN'].map((tab) => (
+                        {tabs.map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setCategory(tab)}
-                                className={`relative pb-4 text-[11px] tracking-[0.4em] font-bold transition-all
+                                className={`relative pb-4 text-[11px] tracking-[0.4em] font-bold uppercase transition-all
                                     ${category === tab
                                         ? 'text-[#D4AF37]'
                                         : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
@@ -74,20 +84,24 @@ const Products = () => {
 
                 {/* Products Grid */}
                 <div className="min-h-[600px]">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={category}
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full"
-                        >
-                            {allProducts[category].map((product) => (
-                                <ProductCard key={product.id} product={product} />
-                            ))}
-                        </motion.div>
-                    </AnimatePresence>
+                    {loading ? (
+                        <p className="text-center text-gray-400">Loading...</p>
+                    ) : (
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={category}
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full"
+                            >
+                                {allProducts[category].map((product) => (
+                                    <ProductCard key={product._id} product={product} />
+                                ))}
+                            </motion.div>
+                        </AnimatePresence>
+                    )}
                 </div>
 
                 {/* Explore More Button */}

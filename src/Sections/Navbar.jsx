@@ -26,10 +26,17 @@ const Header = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="text-gray-600 dark:text-gray-200 body-font bg-white dark:bg-[#121212] transition-colors duration-300 sticky top-0 z-50 shadow-sm"
+      className="body-font sticky top-0 z-50 px-4 pt-4"
     >
-      <div className="container mx-auto flex py-4 px-3 sm:px-5 items-center border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
-
+      <div className="
+        container mx-auto flex py-4 px-3 sm:px-5 items-center 
+        rounded-[2rem]
+        border border-white/20 dark:border-white/10
+        bg-white/70 dark:bg-[#121212]/70
+        backdrop-blur-md
+        shadow-lg
+        transition-colors duration-300
+      ">
         {/* Logo */}
         <div className="flex-shrink-0">
           <a href="/" className="flex items-center group gap-1 sm:gap-2 no-underline">

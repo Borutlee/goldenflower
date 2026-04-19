@@ -1,35 +1,33 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ProductCard from '../Components/ProductCard';
+import { getProduct } from '../Api/ProductsAPI';
 
 const BestSellers = () => {
-    const perfumes = [
-        {
-            id: 1,
-            name: "Oud Royale",
-            category: "Oriental",
-            price: "150.00",
-            img: "https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=500"
-        },
-        {
-            id: 2,
-            name: "Golden Amber",
-            category: "Luxury Edition",
-            price: "185.00",
-            img: "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=500"
-        },
-        {
-            id: 3,
-            name: "Midnight Musk",
-            category: "Night Wear",
-            price: "135.00",
-            img: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=800"
-        }
-    ];
+    const [bestSellers, setBestSellers] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchBestSellers = async () => {
+            try {
+                const allProducts = await getProduct(); // بيجيب كل المنتجات
+                const top3 = [...allProducts]
+                    .sort((a, b) => b.rating - a.rating) // بيرتب من الأعلى للأقل
+                    .slice(0, 3); // بياخد أول 3
+                setBestSellers(top3);
+            } catch (error) {
+                console.error("Failed to fetch best sellers:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBestSellers();
+    }, []);
 
     return (
         <section className="body-font bg-[#fafafa] dark:bg-[#0e0e0e] transition-colors duration-300 py-24 overflow-hidden">
             <div className="container px-5 mx-auto">
-
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
@@ -51,17 +49,22 @@ const BestSellers = () => {
 
                 {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                    {perfumes.map((perfume, index) => (
-                        <motion.div
-                            key={perfume.id}
-                            initial={{ opacity: 0, y: 50 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-50px" }}
-                            transition={{ duration: 0.6, delay: index * 0.15 }}
-                        >
-                            <ProductCard product={perfume} size={14} />
-                        </motion.div>
-                    ))}
+                    {loading ? (
+                        // مؤقتاً — لو عندك ProductCardSkeleton حطها هنا
+                        <p className="text-center col-span-3 text-gray-400">Loading...</p>
+                    ) : (
+                        bestSellers.map((product, index) => (
+                            <motion.div
+                                key={product._id}
+                                initial={{ opacity: 0, y: 50 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, margin: "-50px" }}
+                                transition={{ duration: 0.6, delay: index * 0.15 }}
+                            >
+                                <ProductCard product={product} size={14} />
+                            </motion.div>
+                        ))
+                    )}
                 </div>
             </div>
         </section>

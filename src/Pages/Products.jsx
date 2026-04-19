@@ -2,11 +2,12 @@ import { getProduct } from "../Api/ProductsAPI";
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import ProductCard from "../Components/ProductCard";
 import ProductCardSkeleton from "../Components/ProductCardSkeleton";
-import Select from 'react-select'; // استيراد المكتبة الجديدة
+import Select from 'react-select';
+import { useSearchParams } from 'react-router-dom';
+import { useTheme } from '../Context/ThemeContext';
 
 const PRODUCT_NOTES = ["Floral", "Luxury"];
 
-// خيارات الترتيب (Options)
 const sortOptions = [
     { value: '', label: 'Default' },
     { value: 'high-to-low', label: 'Price: High to Low' },
@@ -14,18 +15,26 @@ const sortOptions = [
 ];
 
 function Products() {
+    const [searchParams] = useSearchParams();
+    const { isDark } = useTheme();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [sort, setSort] = useState('');
 
-    // تصميم مخصص للـ Select ليتناسب مع الـ Dark Mode والـ UI بتاعك
+    useEffect(() => {
+        const categoryFromUrl = searchParams.get('category');
+        if (categoryFromUrl) {
+            setSelectedCategory(categoryFromUrl);
+        }
+    }, [searchParams]);
+
     const customStyles = {
         control: (base, state) => ({
             ...base,
-            background: "#1f2937", // bg-gray-800
-            borderColor: state.isFocused ? "#D4AF37" : "#374151", // ذهبي عند التركيز
-            borderRadius: "0.75rem", // rounded-xl
+            background: isDark ? "#1f2937" : "#ffffff",
+            borderColor: state.isFocused ? "#D4AF37" : isDark ? "#374151" : "#d1d5db",
+            borderRadius: "0.75rem",
             padding: "2px",
             boxShadow: "none",
             cursor: "pointer",
@@ -34,15 +43,19 @@ function Products() {
         }),
         menu: (base) => ({
             ...base,
-            background: "#1f2937",
+            background: isDark ? "#1f2937" : "#ffffff",
             borderRadius: "0.75rem",
             overflow: "hidden",
-            zIndex: 50
+            zIndex: 50,
+            border: isDark ? "none" : "1px solid #e5e7eb",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
         }),
         option: (base, state) => ({
             ...base,
-            background: state.isSelected ? "#D4AF37" : state.isFocused ? "#374151" : "transparent",
-            color: state.isSelected ? "white" : "#d1d5db",
+            background: state.isSelected ? "#D4AF37" : state.isFocused
+                ? isDark ? "#374151" : "#f3f4f6"
+                : "transparent",
+            color: state.isSelected ? "white" : isDark ? "#d1d5db" : "#374151",
             cursor: "pointer",
             fontSize: "12px",
             fontFamily: "serif",
@@ -50,18 +63,18 @@ function Products() {
         }),
         singleValue: (base) => ({
             ...base,
-            color: "#D4AF37", // النص المختار باللون الذهبي
+            color: "#D4AF37",
             fontStyle: "italic",
             fontSize: "12px",
             fontFamily: "serif"
         }),
         placeholder: (base) => ({
             ...base,
-            color: "#9ca3af",
+            color: isDark ? "#9ca3af" : "#6b7280",
             fontSize: "12px",
             fontFamily: "serif"
         }),
-        indicatorSeparator: () => ({ display: 'none' }), // إخفاء الخط الفاصل الصغير
+        indicatorSeparator: () => ({ display: 'none' }),
         dropdownIndicator: (base) => ({
             ...base,
             color: "#D4AF37",
@@ -143,7 +156,7 @@ function Products() {
                     </div>
                 </div>
 
-                {/* Sort By - تم التعديل هنا */}
+                {/* Sort By */}
                 <div className="relative w-full sm:w-64">
                     <label className="block text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-2 ml-1 font-bold">
                         Sort By

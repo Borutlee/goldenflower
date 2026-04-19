@@ -1,5 +1,6 @@
 import { FiFacebook, FiInstagram, FiTwitter, FiSend } from 'react-icons/fi';
 import { IoFlowerOutline } from 'react-icons/io5';
+import { Link } from 'react-router-dom'; // ضيف الاستيراد ده فوق
 
 const Footer = () => {
     return (
@@ -30,29 +31,21 @@ const Footer = () => {
                 </div>
 
                 {/* Column 2: Shop */}
-                <div>
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-6 text-gray-900 dark:text-white transition-colors duration-300">Shop Now</h3>
-                    <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400 font-medium">
-                        {["Men's Collection", "Women's Collection", "Best Sellers", "Limited Edition"].map(link => (
-                            <li key={link}>
-                                <a href="#" className="hover:text-[#D4AF37] transition-colors duration-300">{link}</a>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    <li><Link to="/products?category=men" className="hover:text-[#D4AF37] transition-colors duration-300">Men's Collection</Link></li>
+                    <li><Link to="/products?category=women" className="hover:text-[#D4AF37] transition-colors duration-300">Women's Collection</Link></li>
+                    <li><Link to="/products" className="hover:text-[#D4AF37] transition-colors duration-300">Best Sellers</Link></li>
+                    <li><Link to="/products" className="hover:text-[#D4AF37] transition-colors duration-300">Limited Edition</Link></li>
+                </ul>
 
                 {/* Column 3: Support */}
-                <div>
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-6 text-gray-900 dark:text-white transition-colors duration-300">Support</h3>
-                    <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400 font-medium">
-                        {["Our Story", "Shipping Info", "Return Policy", "Contact Us"].map(link => (
-                            <li key={link}>
-                                <a href="#" className="hover:text-[#D4AF37] transition-colors duration-300">{link}</a>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
+                <ul className="space-y-3 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    <li><Link to="/about" className="hover:text-[#D4AF37] transition-colors duration-300">Our Story</Link></li>
+                    <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors duration-300">Shipping Info</Link></li>
+                    <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors duration-300">Return Policy</Link></li>
+                    <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors duration-300">Contact Us</Link></li>
+                </ul>
+                
                 {/* Column 4: Newsletter */}
                 <div>
                     <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] mb-6 text-gray-900 dark:text-white transition-colors duration-300">Join the Club</h3>

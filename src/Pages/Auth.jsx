@@ -187,7 +187,7 @@ export default function Auth() {
 
                 {/* Back to shop navigation */}
                 <button
-                    onClick={() => navigate('/Golden-Flower/products')}
+                    onClick={() => navigate('/products')}
                     className="w-full text-center text-[10px] text-gray-400 hover:text-gray-800 dark:text-gray-600 dark:hover:text-gray-400 uppercase tracking-[0.2em] font-black mt-8 transition-all flex items-center justify-center gap-2 group"
                 >
                     <span className="group-hover:-translate-x-1 transition-transform">←</span>
