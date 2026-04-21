@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { FiStar, FiArrowRight, FiEye } from "react-icons/fi";
+import { FiStar, FiArrowRight, FiEye, FiHeart } from "react-icons/fi";
 import { GiFlowerPot, GiWaterDrop } from "react-icons/gi";
 import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductModal from './ProductModel';
+import { useWishlist } from '../Context/wishlistContext';
 
 function useInView(options = {}) {
     const ref = useRef(null);
@@ -11,17 +12,17 @@ function useInView(options = {}) {
 
     useEffect(() => {
         const el = ref.current;
-        if (!el) return;
+        if (!el || typeof IntersectionObserver === 'undefined') return;
 
         const observer = new IntersectionObserver(([entry]) => {
             if (entry.isIntersecting) {
                 setIsInView(true);
-                observer.unobserve(el);
+                observer.disconnect();
             }
         }, { threshold: 0.1, rootMargin: "0px 0px -60px 0px", ...options });
 
         observer.observe(el);
-        return () => observer.unobserve(el);
+        return () => observer.disconnect();
     }, []);
 
     return [ref, isInView];
@@ -32,6 +33,8 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
     const [isOpen, setOpen] = useState(false);
     const [ref, isInView] = useInView();
     const navigate = useNavigate();
+    const { toggleWishlist, isWishlisted } = useWishlist();
+    const wished = isWishlisted(product?._id);
 
     const handleOpen = useCallback(() => setOpen(true), []);
     const handleClose = useCallback(() => setOpen(false), []);
@@ -62,7 +65,6 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                     ease: "easeOut"
                 }}
             >
-                {/* ✅ الكارت نفسه */}
                 <div className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-3 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2">
 
                     {/* Image Container */}
@@ -96,6 +98,26 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                                 className="text-gray-500 dark:text-gray-300 group-hover/eye:text-white transition-colors duration-300"
                             />
                         </motion.button>
+
+                        {/* Wishlist Button */}
+                        <motion.button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleWishlist(product);
+                            }}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            className={`absolute top-24 right-3 backdrop-blur-md p-1.5 rounded-full shadow-sm z-10 transition-all duration-300
+                                ${wished
+                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-500'
+                                    : 'bg-white/90 dark:bg-black/60 text-gray-500 dark:text-gray-300 hover:bg-[#D4AF37] hover:text-white'
+                                }`}
+                        >
+                            <FiHeart
+                                size={11}
+                                className={wished ? 'fill-red-500' : ''}
+                            />
+                        </motion.button>
                     </div>
 
                     {/* Info & Action Section */}
@@ -106,12 +128,12 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                             {product.category || "Signature Scent"}
                         </h3>
 
-                        {/* ✅ Name - كان dark:text-black غلط */}
+                        {/* Name */}
                         <h2 className="text-gray-900 dark:text-white text-base sm:text-xl font-serif mb-1.5 sm:mb-2 italic transition-colors duration-300">
                             {product.title || product.name}
                         </h2>
 
-                        {/* ✅ Notes - كان dark:text-black-500 غلط */}
+                        {/* Notes */}
                         <div className="flex justify-center gap-3 sm:gap-4 mb-3 sm:mb-4 opacity-70">
                             <div className="flex items-center gap-1">
                                 <GiFlowerPot className="text-[#D4AF37]" size={12} />

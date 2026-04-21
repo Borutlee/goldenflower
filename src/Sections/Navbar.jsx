@@ -165,13 +165,13 @@ const Header = () => {
 
             <hr className="my-2 border-gray-100 dark:border-gray-700" />
 
-            <a href="/login" className="w-full py-3 text-center border border-[#D4AF37] text-[#D4AF37] rounded-xl font-bold">
+            <Link to="/Auth" onClick={() => setIsOpen(false)} className="w-full py-3 text-center border border-[#D4AF37] text-[#D4AF37] rounded-xl font-bold">
               Log In
-            </a>
+            </Link>
 
-            <a href="/signup" className="w-full py-3 text-center bg-[#D4AF37] text-white rounded-xl font-bold shadow-md shadow-yellow-100">
+            <Link to="/Auth" onClick={() => setIsOpen(false)} className="w-full py-3 text-center bg-[#D4AF37] text-white rounded-xl font-bold shadow-md shadow-yellow-100">
               Sign Up
-            </a>
+            </Link>
           </div>
         </div>
       </div>

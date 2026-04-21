@@ -3,11 +3,15 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiX, FiShoppingBag, FiHeart, FiMinus, FiPlus, FiArrowRight } from 'react-icons/fi';
 import { useCart } from '../Context/CartContext';
+import { useWishlist } from '../Context/WishlistContext';
 
 const ProductModal = ({ isOpen, onClose, product }) => {
     const [size, setSize] = useState('100ml');
     const [quantity, setQuantity] = useState(1);
-    const [wished, setWished] = useState(false);
+
+    const { toggleWishlist, isWishlisted } = useWishlist();
+    const wished = isWishlisted(product?._id)
+
     const navigate = useNavigate();
     const { addToCart } = useCart();
 
@@ -23,7 +27,7 @@ const ProductModal = ({ isOpen, onClose, product }) => {
 
     const handleDecrement = useCallback(() => setQuantity(q => Math.max(1, q - 1)), []);
     const handleIncrement = useCallback(() => setQuantity(q => q + 1), []);
-    const handleWish = useCallback(() => setWished(w => !w), []);
+    const handleWish = useCallback(() => toggleWishlist(product), [product, toggleWishlist]);
     const handleAddToCart = useCallback(() => {
         addToCart(product, quantity);
         onClose();
