@@ -11,6 +11,7 @@ import ProductCard from '../Components/ProductCard';
 import { useCart } from '../Context/CartContext';
 import { useWishlist } from '../Context/wishlistContext';
 
+
 const SIZES = ['30ml', '50ml', '100ml'];
 const NOTES = ['Floral', 'Oud', 'Amber', 'Musk'];
 const TABS = ['Description', 'Notes', 'Reviews'];

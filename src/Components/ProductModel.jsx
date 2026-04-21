@@ -3,7 +3,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiX, FiShoppingBag, FiHeart, FiMinus, FiPlus, FiArrowRight } from 'react-icons/fi';
 import { useCart } from '../Context/CartContext';
-import { useWishlist } from '../Context/WishlistContext';
+import { useWishlist } from '../Context/wishlistContext';
 
 const ProductModal = ({ isOpen, onClose, product }) => {
     const [size, setSize] = useState('100ml');
