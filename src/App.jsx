@@ -9,6 +9,7 @@ import Cart from './Pages/CartPage'
 import Auth from './Pages/Auth'
 import About from './Pages/About'
 import Contact from './Pages/Contact'
+import UserProfile from './Pages/userProfile'
 import ScrollToTop from './Components/scrollToTop';
 import { useTheme } from './Context/ThemeContext'
 
@@ -33,6 +34,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
 
         <Route path="/Auth" element={<Auth />} />
+
+        <Route path="/userProfile" element={<UserProfile />} />
 
         {/* ✅ Route الـ SingleProduct */}
         <Route path="/products/:id" element={<SingleProduct />} />
