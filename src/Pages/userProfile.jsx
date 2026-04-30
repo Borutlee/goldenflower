@@ -6,6 +6,7 @@ import { useAuth } from '../Context/AuthContext';
 import { logout } from '../supabase/authService';
 import { useNavigate } from 'react-router-dom';
 import ProductCard from '../Components/ProductCard';
+import { updateUserName, uploadAvatar } from '../supabase/authService';
 
 const STATUS_STYLES = {
     Delivered: "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800",
@@ -25,23 +26,47 @@ export default function Profile() {
     const [activeTab, setActiveTab] = useState('Wishlist');
     const [avatarPreview, setAvatarPreview] = useState(null);
 
+    const [saveLoading, setSaveLoading] = useState(false);
+    const [saveError, setSaveError] = useState('');
+    const [avatarFile, setAvatarFile] = useState(null);
+
     const handleEdit = () => {
         setTempName(user?.user_metadata?.name || '');
         setEditing(true);
     };
 
-    const handleSave = () => {
-        // هنربطها بـ Supabase بعدين
-        setEditing(false);
+    const handleSave = async () => {
+        setSaveLoading(true);
+        setSaveError('');
+        try {
+            // لو غير الاسم
+            if (tempName && tempName !== user?.user_metadata?.name) {
+                await updateUserName(tempName);
+            }
+            // لو غير الصورة
+            if (avatarFile) {
+                await uploadAvatar(avatarFile, user.id);
+                setAvatarFile(null);
+            }
+            setEditing(false);
+        } catch (err) {
+            setSaveError(err.message);
+        } finally {
+            setSaveLoading(false);
+        }
     };
 
     const handleCancel = () => {
         setEditing(false);
+        setAvatarPreview(null);
+        setAvatarFile(null);
+        setSaveError('');
     };
 
     const handleAvatarChange = (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        setAvatarFile(file); // ← احفظ الملف
         const reader = new FileReader();
         reader.onloadend = () => setAvatarPreview(reader.result);
         reader.readAsDataURL(file);
@@ -134,10 +159,12 @@ export default function Profile() {
                                     <motion.button
                                         whileTap={{ scale: 0.95 }}
                                         onClick={handleSave}
-                                        className="flex items-center gap-1.5 px-4 py-2 bg-[#D4AF37] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#B8860B] transition-colors"
+                                        disabled={saveLoading}
+                                        className="flex items-center gap-1.5 px-4 py-2 bg-[#D4AF37] text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#B8860B] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
-                                        <FiSave size={13} /> Save
+                                        <FiSave size={13} /> {saveLoading ? 'Saving...' : 'Save'}
                                     </motion.button>
+                                    
                                     <motion.button
                                         whileTap={{ scale: 0.95 }}
                                         onClick={handleCancel}
