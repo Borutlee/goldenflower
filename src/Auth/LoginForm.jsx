@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FiMail } from 'react-icons/fi';
-import { login } from '../../supabase/authService';
+import { login } from '../supabase/authService';
 import { Input, PasswordInput, SubmitButton, isValidEmail } from './AuthInput';
 
 export default function LoginForm({ onForgot }) {
