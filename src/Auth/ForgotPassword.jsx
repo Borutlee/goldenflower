@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { FiMail, FiArrowLeft } from 'react-icons/fi';
-import { sendResetOtp, verifyResetOtp, updatePassword } from '../../supabase/authService';
+import { sendResetOtp, verifyResetOtp, updatePassword } from '../supabase/authService';
 import { Input, SubmitButton, isValidEmail } from './AuthInput';
 import OtpStep from './OtpStep';
 import NewPasswordStep from './NewPasswordStep';
