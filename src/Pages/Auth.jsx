@@ -7,6 +7,23 @@ import { login, signUp, sendResetOtp, verifyResetOtp, updatePassword } from '../
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// ── Email Validation — أشهر الدومينات العالمية ──
+const ALLOWED_DOMAINS = [
+    'gmail.com', 'yahoo.com', 'yahoo.co.uk', 'yahoo.fr', 'yahoo.de',
+    'outlook.com', 'hotmail.com', 'hotmail.co.uk', 'live.com', 'msn.com',
+    'icloud.com', 'me.com', 'mac.com',
+    'protonmail.com', 'proton.me',
+    'aol.com', 'zoho.com', 'mail.com',
+    'googlemail.com', 'ymail.com',
+];
+
+const isValidEmail = (email) => {
+    const basic = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!basic) return false;
+    const domain = email.split('@')[1]?.toLowerCase();
+    return ALLOWED_DOMAINS.includes(domain);
+};
+
 // ── خارج الـ Auth function تماماً ──
 
 const Input = ({ icon: Icon, ...props }) => (
@@ -51,6 +68,8 @@ const SubmitButton = ({ label, loading }) => (
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+const OTP_COOLDOWN = 60; // ثانية
+
 export default function Auth() {
     const [tab, setTab] = useState('login');
     const [showPass, setShowPass] = useState(false);
@@ -66,7 +85,6 @@ export default function Auth() {
     });
 
     // ━━ Forgot Password State ━━
-    // forgotStep: 'email' | 'otp' | 'newpass'
     const [forgotStep, setForgotStep] = useState('email');
     const [forgotEmail, setForgotEmail] = useState('');
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -74,9 +92,30 @@ export default function Auth() {
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
     const otpRefs = useRef([]);
 
+    // ━━ Resend Cooldown ━━
+    const [cooldown, setCooldown] = useState(0);
+    const cooldownRef = useRef(null);
+
+    const startCooldown = () => {
+        setCooldown(OTP_COOLDOWN);
+        cooldownRef.current = setInterval(() => {
+            setCooldown(prev => {
+                if (prev <= 1) {
+                    clearInterval(cooldownRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
     // ━━━━ Login ━━━━
     const handleLogin = useCallback(async (e) => {
         e.preventDefault();
+        if (!isValidEmail(loginData.email)) {
+            toast.error('Please use a valid email');
+            return;
+        }
         setLoading(true);
         try {
             await login(loginData.email, loginData.password);
@@ -91,6 +130,10 @@ export default function Auth() {
     // ━━━━ Register ━━━━
     const handleRegister = useCallback(async (e) => {
         e.preventDefault();
+        if (!isValidEmail(registerData.email)) {
+            toast.error('Please use a valid email');
+            return;
+        }
         if (registerData.password !== registerData.confirmPassword) {
             toast.error('Passwords do not match.');
             return;
@@ -116,11 +159,16 @@ export default function Auth() {
     // ━━━━ Step 1 — Send OTP ━━━━
     const handleSendOtp = async (e) => {
         e.preventDefault();
+        if (!isValidEmail(forgotEmail)) {
+            toast.error('Please use a valid email');
+            return;
+        }
         setLoading(true);
         try {
             await sendResetOtp(forgotEmail);
             toast.success('Code sent! Check your email.');
             setForgotStep('otp');
+            startCooldown();
         } catch (err) {
             toast.error(err.message);
         } finally {
@@ -178,21 +226,32 @@ export default function Auth() {
         }
     };
 
+    // ━━━━ Resend OTP ━━━━
+    const handleResend = async () => {
+        if (cooldown > 0) return;
+        try {
+            await sendResetOtp(forgotEmail);
+            toast.success('New code sent!');
+            setOtp(['', '', '', '', '', '']);
+            otpRefs.current[0]?.focus();
+            startCooldown();
+        } catch {
+            toast.error('Failed to resend.');
+        }
+    };
+
     // ━━━━ OTP Input Logic ━━━━
     const handleOtpChange = (index, value) => {
-        // بياخد رقم واحد بس
         const val = value.replace(/[^0-9]/g, '').slice(-1);
         const newOtp = [...otp];
         newOtp[index] = val;
         setOtp(newOtp);
-        // لو كتب حرف يروح للتالي
         if (val && index < 5) {
             otpRefs.current[index + 1]?.focus();
         }
     };
 
     const handleOtpKeyDown = (index, e) => {
-        // لو مسح يرجع للسابق
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
             otpRefs.current[index - 1]?.focus();
         }
@@ -205,7 +264,6 @@ export default function Auth() {
         const newOtp = ['', '', '', '', '', ''];
         pasted.split('').forEach((char, i) => { newOtp[i] = char; });
         setOtp(newOtp);
-        // focus على آخر مربع اتملى
         const lastFilled = Math.min(pasted.length, 5);
         otpRefs.current[lastFilled]?.focus();
     };
@@ -216,21 +274,16 @@ export default function Auth() {
         setOtp(['', '', '', '', '', '']);
         setNewPassword('');
         setConfirmNewPassword('');
+        clearInterval(cooldownRef.current);
+        setCooldown(0);
         setTab('login');
     };
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-[#0A0A0A] flex items-center justify-center px-4 py-16 transition-colors duration-500">
 
-            <ToastContainer
-                position="top-right"
-                autoClose={3000}
-                hideProgressBar={false}
-                theme="colored"
-                toastClassName="!rounded-2xl !font-sans !text-sm"
-            />
+            <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} theme="colored" toastClassName="!rounded-2xl !font-sans !text-sm" />
 
-            {/* Background */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-30 dark:opacity-20">
                 <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-[#D4AF37]/20 rounded-full blur-[120px]" />
                 <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-[#D4AF37]/20 rounded-full blur-[120px]" />
@@ -247,7 +300,7 @@ export default function Auth() {
                     <motion.div whileHover={{ rotate: 90 }} transition={{ duration: 0.5 }}>
                         <IoFlowerOutline className="text-4xl text-[#D4AF37]" />
                     </motion.div>
-                    <span className="text-xl font-black tracking-tighter text-gray-900 dark:text-white transition-colors">
+                    <span className="text-xl font-black tracking-tighter text-gray-900 dark:text-white">
                         <span className="text-[#D4AF37]">GOLDEN</span> FLOWER
                     </span>
                 </div>
@@ -258,9 +311,7 @@ export default function Auth() {
                     {tab !== 'forgot' && (
                         <div className="flex border-b border-gray-100 dark:border-white/5">
                             {['login', 'register'].map(t => (
-                                <button
-                                    key={t}
-                                    onClick={() => setTab(t)}
+                                <button key={t} onClick={() => setTab(t)}
                                     className={`flex-1 py-5 text-[11px] font-black uppercase tracking-[0.2em] relative transition-colors duration-300
                                         ${tab === t ? 'text-gray-900 dark:text-white' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`}
                                 >
@@ -282,8 +333,7 @@ export default function Auth() {
                                 exit={{ opacity: 0, x: -10 }}
                                 transition={{ duration: 0.3 }}
                             >
-
-                                {/* ━━━━ Forgot — Step 1: Email ━━━━ */}
+                                {/* ━━━━ Forgot Step 1: Email ━━━━ */}
                                 {tab === 'forgot' && forgotStep === 'email' && (
                                     <form onSubmit={handleSendOtp} className="flex flex-col gap-5">
                                         <button type="button" onClick={resetForgot} className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] transition-colors text-[10px] font-black uppercase tracking-widest w-fit">
@@ -294,34 +344,28 @@ export default function Auth() {
                                             <p className="text-xs text-gray-400 mt-2">Enter your email and we'll send you a code</p>
                                             <div className="h-px w-8 bg-[#D4AF37] mx-auto mt-3" />
                                         </div>
-                                        <Input
-                                            icon={FiMail}
-                                            type="email"
-                                            placeholder="Email address"
-                                            required
-                                            value={forgotEmail}
-                                            onChange={e => setForgotEmail(e.target.value)}
-                                        />
+                                        <Input icon={FiMail} type="email" placeholder="Email address" required value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} />
                                         <SubmitButton label="Send Code" loading={loading} />
                                     </form>
                                 )}
 
-                                {/* ━━━━ Forgot — Step 2: OTP ━━━━ */}
+                                {/* ━━━━ Forgot Step 2: OTP ━━━━ */}
                                 {tab === 'forgot' && forgotStep === 'otp' && (
-                                    <form onSubmit={handleVerifyOtp} className="flex flex-col gap-5">
+                                    <form onSubmit={handleVerifyOtp} className="flex flex-col gap-6">
                                         <button type="button" onClick={() => setForgotStep('email')} className="flex items-center gap-2 text-gray-400 hover:text-[#D4AF37] transition-colors text-[10px] font-black uppercase tracking-widest w-fit">
                                             <FiArrowLeft size={13} /> Back
                                         </button>
-                                        <div className="text-center mb-2">
+
+                                        <div className="text-center">
                                             <h2 className="text-2xl font-serif italic text-gray-900 dark:text-white">Enter Code</h2>
                                             <p className="text-xs text-gray-400 mt-2">
-                                                We sent a 6-digit code to <span className="text-[#D4AF37] font-bold">{forgotEmail}</span>
+                                                Sent to <span className="text-[#D4AF37] font-bold">{forgotEmail}</span>
                                             </p>
                                             <div className="h-px w-8 bg-[#D4AF37] mx-auto mt-3" />
                                         </div>
 
                                         {/* OTP Boxes */}
-                                        <div className="flex justify-center gap-3" onPaste={handleOtpPaste}>
+                                        <div className="flex justify-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
                                             {otp.map((digit, index) => (
                                                 <motion.input
                                                     key={index}
@@ -335,40 +379,48 @@ export default function Auth() {
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ delay: index * 0.05 }}
-                                                    className={`w-12 h-14 text-center text-xl font-black rounded-2xl border-2 bg-gray-50 dark:bg-[#1C1C1C] text-gray-900 dark:text-white outline-none transition-all duration-200
-                                                        ${digit
-                                                            ? 'border-[#D4AF37] shadow-lg shadow-[#D4AF37]/10'
-                                                            : 'border-gray-200 dark:border-white/10'
-                                                        }
+                                                    className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-black rounded-xl sm:rounded-2xl border-2 bg-gray-50 dark:bg-[#1C1C1C] text-gray-900 dark:text-white outline-none transition-all duration-200
+                                                        ${digit ? 'border-[#D4AF37] shadow-lg shadow-[#D4AF37]/10' : 'border-gray-200 dark:border-white/10'}
                                                         focus:border-[#D4AF37] focus:shadow-lg focus:shadow-[#D4AF37]/10`}
                                                 />
                                             ))}
                                         </div>
 
-                                        <SubmitButton label="Verify Code" loading={loading} />
+                                        {/* Cooldown + Resend */}
+                                        <div className="flex flex-col items-center gap-2">
+                                            {/* Countdown bar */}
+                                            {cooldown > 0 && (
+                                                <div className="w-full bg-gray-100 dark:bg-white/5 rounded-full h-1.5 overflow-hidden">
+                                                    <motion.div
+                                                        className="h-full bg-[#D4AF37] rounded-full"
+                                                        initial={{ width: '100%' }}
+                                                        animate={{ width: `${(cooldown / OTP_COOLDOWN) * 100}%` }}
+                                                        transition={{ duration: 1, ease: 'linear' }}
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                                                <span>Didn't receive the code?</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleResend}
+                                                    disabled={cooldown > 0}
+                                                    className={`font-black uppercase tracking-wider transition-all
+                                                        ${cooldown > 0
+                                                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                                                            : 'text-[#D4AF37] hover:underline cursor-pointer'
+                                                        }`}
+                                                >
+                                                    {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend'}
+                                                </button>
+                                            </div>
+                                        </div>
 
-                                        {/* Resend */}
-                                        <p className="text-center text-[10px] text-gray-400">
-                                            Didn't receive the code?{' '}
-                                            <button
-                                                type="button"
-                                                onClick={async () => {
-                                                    try {
-                                                        await sendResetOtp(forgotEmail);
-                                                        toast.success('New code sent!');
-                                                    } catch {
-                                                        toast.error('Failed to resend.');
-                                                    }
-                                                }}
-                                                className="text-[#D4AF37] font-black hover:underline uppercase tracking-wider"
-                                            >
-                                                Resend
-                                            </button>
-                                        </p>
+                                        <SubmitButton label="Verify Code" loading={loading} />
                                     </form>
                                 )}
 
-                                {/* ━━━━ Forgot — Step 3: New Password ━━━━ */}
+                                {/* ━━━━ Forgot Step 3: New Password ━━━━ */}
                                 {tab === 'forgot' && forgotStep === 'newpass' && (
                                     <form onSubmit={handleSetNewPassword} className="flex flex-col gap-5">
                                         <div className="text-center mb-2">
@@ -376,22 +428,8 @@ export default function Auth() {
                                             <p className="text-xs text-gray-400 mt-2">Choose a strong password</p>
                                             <div className="h-px w-8 bg-[#D4AF37] mx-auto mt-3" />
                                         </div>
-                                        <PasswordInput
-                                            show={showNewPass}
-                                            onToggle={() => setShowNewPass(!showNewPass)}
-                                            placeholder="New password"
-                                            required
-                                            value={newPassword}
-                                            onChange={e => setNewPassword(e.target.value)}
-                                        />
-                                        <PasswordInput
-                                            show={showConfirmNewPass}
-                                            onToggle={() => setShowConfirmNewPass(!showConfirmNewPass)}
-                                            placeholder="Confirm new password"
-                                            required
-                                            value={confirmNewPassword}
-                                            onChange={e => setConfirmNewPassword(e.target.value)}
-                                        />
+                                        <PasswordInput show={showNewPass} onToggle={() => setShowNewPass(!showNewPass)} placeholder="New password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                                        <PasswordInput show={showConfirmNewPass} onToggle={() => setShowConfirmNewPass(!showConfirmNewPass)} placeholder="Confirm new password" required value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} />
                                         <SubmitButton label="Update Password" loading={loading} />
                                     </form>
                                 )}
@@ -413,32 +451,18 @@ export default function Auth() {
                                                         <Input icon={FiUser} type="text" placeholder="First name" required value={registerData.firstName} onChange={e => setRegisterData({ ...registerData, firstName: e.target.value })} />
                                                         <Input icon={FiUser} type="text" placeholder="Last name" required value={registerData.lastName} onChange={e => setRegisterData({ ...registerData, lastName: e.target.value })} />
                                                     </div>
-                                                    <Input
-                                                        icon={FiPhone}
-                                                        type="tel"
-                                                        placeholder="Phone number"
-                                                        value={registerData.phone}
-                                                        onChange={e => setRegisterData({ ...registerData, phone: e.target.value.replace(/[^0-9]/g, '') })}
-                                                    />
+                                                    <Input icon={FiPhone} type="tel" placeholder="Phone number" value={registerData.phone} onChange={e => setRegisterData({ ...registerData, phone: e.target.value.replace(/[^0-9]/g, '') })} />
                                                 </>
                                             )}
 
-                                            <Input
-                                                icon={FiMail}
-                                                type="email"
-                                                placeholder="Email address"
-                                                required
+                                            <Input icon={FiMail} type="email" placeholder="Email address" required
                                                 value={tab === 'login' ? loginData.email : registerData.email}
                                                 onChange={e => tab === 'login'
                                                     ? setLoginData({ ...loginData, email: e.target.value })
                                                     : setRegisterData({ ...registerData, email: e.target.value })}
                                             />
 
-                                            <PasswordInput
-                                                show={showPass}
-                                                onToggle={() => setShowPass(!showPass)}
-                                                placeholder="Password"
-                                                required
+                                            <PasswordInput show={showPass} onToggle={() => setShowPass(!showPass)} placeholder="Password" required
                                                 value={tab === 'login' ? loginData.password : registerData.password}
                                                 onChange={e => tab === 'login'
                                                     ? setLoginData({ ...loginData, password: e.target.value })
@@ -446,11 +470,7 @@ export default function Auth() {
                                             />
 
                                             {tab === 'register' && (
-                                                <PasswordInput
-                                                    show={showConfirmPass}
-                                                    onToggle={() => setShowConfirmPass(!showConfirmPass)}
-                                                    placeholder="Confirm password"
-                                                    required
+                                                <PasswordInput show={showConfirmPass} onToggle={() => setShowConfirmPass(!showConfirmPass)} placeholder="Confirm password" required
                                                     value={registerData.confirmPassword}
                                                     onChange={e => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                                                 />

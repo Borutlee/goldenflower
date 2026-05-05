@@ -49,25 +49,21 @@ export const updateUserProfile = async ({ firstName, lastName, phone }) => {
 export const uploadAvatar = async (file, userId) => {
     const fileExt = file.name.split('.').pop();
     const filePath = `${userId}/avatar.${fileExt}`;
-
     const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
     if (uploadError) throw uploadError;
-
     const { data } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-
     const { error: updateError } = await supabase.auth.updateUser({
         data: { avatar_url: data.publicUrl }
     });
     if (updateError) throw updateError;
-
     return data.publicUrl;
 };
 
-// ── Send OTP (Forgot Password) ──
+// ── Send OTP ──
 export const sendResetOtp = async (email) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: undefined,
@@ -86,11 +82,21 @@ export const verifyResetOtp = async (email, token) => {
     return data;
 };
 
-// ── Set New Password (بعد التحقق من الـ OTP) ──
+// ── Set New Password ──
 export const updatePassword = async (newPassword) => {
     const { data, error } = await supabase.auth.updateUser({
         password: newPassword,
     });
     if (error) throw error;
     return data;
+};
+
+// ── Delete Account ──
+export const deleteAccount = async (email, password) => {
+    // أول حاجة نتأكد من الباسورد بـ re-login
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    if (loginError) throw new Error('Incorrect password.');
+    // بعدين نمسح الأكونت
+    const { error } = await supabase.functions.invoke('delete-user');
+    if (error) throw new Error('Failed to delete account.');
 };
