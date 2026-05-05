@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { FiArrowLeft } from 'react-icons/fi';
-import { sendResetOtp } from '../../supabase/authService';
+import { sendResetOtp } from '../supabase/authService';
 import { SubmitButton } from './AuthInput';
 
 const OTP_COOLDOWN = 60;
