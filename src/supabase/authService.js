@@ -100,3 +100,18 @@ export const deleteAccount = async (email, password) => {
     const { error } = await supabase.functions.invoke('delete-user');
     if (error) throw new Error('Failed to delete account.');
 };
+
+// ── Update Email ──
+export const updateUserEmail = async (newEmail, password) => {
+    // تأكد من الباسورد الأول
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password,
+    });
+    if (loginError) throw new Error('Incorrect password.');
+
+    // غير الإيميل
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    if (error) throw error;
+};

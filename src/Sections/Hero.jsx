@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import heropic from '../imgs/heropic.png';
+import heropic from '../imgs/heropic-2.webp';
 
 export const Hero = () => {
     const entranceDelay = 0.8;

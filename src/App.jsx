@@ -12,6 +12,7 @@ import Contact from './Pages/Contact'
 import UserProfile from './Pages/userProfile'
 import ScrollToTop from './Components/scrollToTop';
 import { useTheme } from './Context/ThemeContext'
+import ProtectedRoute from './Components/ProtectedRoute';
 
 function App() {
 
@@ -35,7 +36,11 @@ function App() {
 
         <Route path="/Auth" element={<Auth />} />
 
-        <Route path="/userProfile" element={<UserProfile />} />
+        <Route path="/userProfile" element={
+          <ProtectedRoute>
+            <UserProfile />
+          </ProtectedRoute>
+        } />
 
         {/* ✅ Route الـ SingleProduct */}
         <Route path="/products/:id" element={<SingleProduct />} />
