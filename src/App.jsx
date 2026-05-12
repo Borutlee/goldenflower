@@ -13,6 +13,9 @@ import UserProfile from './Pages/userProfile'
 import ScrollToTop from './Components/scrollToTop';
 import { useTheme } from './Context/ThemeContext'
 import ProtectedRoute from './Components/ProtectedRoute';
+import ProtectedAdminRoute from './Components/ProtectedAdminRoute';
+import AdminPanel from './pages/AdminPanel';
+
 
 function App() {
 
@@ -41,6 +44,13 @@ function App() {
             <UserProfile />
           </ProtectedRoute>
         } />
+
+        <Route path="/admin" element={
+          <ProtectedAdminRoute>
+            <AdminPanel />
+          </ProtectedAdminRoute>
+        } />
+
 
         {/* ✅ Route الـ SingleProduct */}
         <Route path="/products/:id" element={<SingleProduct />} />

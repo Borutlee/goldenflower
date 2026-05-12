@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    FiEdit2, FiSave, FiX, FiShoppingBag, FiHeart, FiUser, FiMail,
-    FiCamera, FiLogOut, FiPhone, FiTrash2, FiAlertTriangle,
-    FiEye, FiEyeOff, FiSettings, FiShield
+    FiSave, FiX, FiShoppingBag, FiHeart, FiUser, FiMail,
+    FiCamera, FiLogOut, FiPhone, FiTrash2,
+    FiEye, FiEyeOff, FiSettings, FiShield, FiLayout
 } from 'react-icons/fi';
 import { useWishlist } from '../Context/wishlistContext';
 import { useAuth } from '../Context/AuthContext';
@@ -21,13 +21,13 @@ const EditInput = ({ icon: Icon, ...props }) => (
     <div className="relative">
         <Icon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm font-semibold outline-none focus:border-[#D4AF37] transition-colors"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#222] text-gray-900 dark:text-white text-sm font-semibold outline-none focus:border-[#D4AF37] transition-colors"
             {...props}
         />
     </div>
 );
 
-const PasswordModal = ({ title, description, accentColor = '[#D4AF37]', onConfirm, onClose, loading }) => {
+const PasswordModal = ({ title, description, onConfirm, onClose, loading }) => {
     const [password, setPassword] = useState('');
     const [show, setShow] = useState(false);
 
@@ -57,7 +57,7 @@ const PasswordModal = ({ title, description, accentColor = '[#D4AF37]', onConfir
                 </button>
                 <div className="text-center mb-6">
                     <h3 className="text-xl font-serif italic text-gray-900 dark:text-white font-bold">{title}</h3>
-                    <p className="text-xs text-gray-400 mt-2 leading-relaxed">{description}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 leading-relaxed">{description}</p>
                 </div>
                 <div className="relative mb-4">
                     <FiEye size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -67,14 +67,14 @@ const PasswordModal = ({ title, description, accentColor = '[#D4AF37]', onConfir
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && password && onConfirm(password)}
-                        className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm outline-none focus:border-[#D4AF37] transition-colors"
+                        className="w-full pl-9 pr-10 py-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#222] text-gray-900 dark:text-white text-sm outline-none focus:border-[#D4AF37] transition-colors"
                     />
-                    <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                    <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
                         {show ? <FiEyeOff size={14} /> : <FiEye size={14} />}
                     </button>
                 </div>
                 <div className="flex gap-3">
-                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
                         Cancel
                     </button>
                     <motion.button
@@ -100,17 +100,17 @@ export default function Profile() {
 
     const [activeTab, setActiveTab] = useState('Wishlist');
 
-    // ━━ Settings Window ━━
+    // ━━ Settings ━━
     const [showSettings, setShowSettings] = useState(false);
     const [settingsTab, setSettingsTab] = useState('General');
 
-    // ━━ General Tab State ━━
+    // ━━ General ━━
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [avatarFile, setAvatarFile] = useState(null);
     const [saveLoading, setSaveLoading] = useState(false);
     const [tempData, setTempData] = useState({ firstName: '', lastName: '', phone: '' });
 
-    // ━━ Security Tab State ━━
+    // ━━ Security ━━
     const [editingEmail, setEditingEmail] = useState(false);
     const [newEmail, setNewEmail] = useState('');
     const [showEmailPassModal, setShowEmailPassModal] = useState(false);
@@ -134,7 +134,6 @@ export default function Profile() {
         setAvatarFile(null);
     };
 
-    // ━━ Save General ━━
     const handleSave = async () => {
         setSaveLoading(true);
         try {
@@ -161,20 +160,16 @@ export default function Profile() {
         reader.readAsDataURL(file);
     };
 
-    // ━━ Change Email ━━
     const handleChangeEmail = async (password) => {
         setSecurityLoading(true);
         try {
             const { error: loginError } = await supabase.auth.signInWithPassword({
-                email: user.email,
-                password,
+                email: user.email, password,
             });
             if (loginError) { toast.error('Incorrect password.'); return; }
-
             const { error } = await supabase.auth.updateUser({ email: newEmail });
             if (error) throw error;
-
-            toast.success('Email updated! Check your new inbox to confirm.');
+            toast.success('Confirmation sent! Check your NEW email inbox and click the link.', { autoClose: 6000 });
             setShowEmailPassModal(false);
             setEditingEmail(false);
         } catch (err) {
@@ -184,19 +179,15 @@ export default function Profile() {
         }
     };
 
-    // ━━ Delete Account ━━
     const handleDeleteAccount = async (password) => {
         setSecurityLoading(true);
         try {
             const { error: loginError } = await supabase.auth.signInWithPassword({
-                email: user.email,
-                password,
+                email: user.email, password,
             });
             if (loginError) { toast.error('Incorrect password.'); setSecurityLoading(false); return; }
-
             const { error } = await supabase.functions.invoke('delete-user');
             if (error) throw error;
-
             toast.success('Account deleted successfully.');
             setTimeout(() => navigate('/Auth'), 1500);
         } catch (err) {
@@ -221,6 +212,8 @@ export default function Profile() {
         ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
         : '';
 
+    const isAdmin = user?.user_metadata?.role === 'admin';
+
     return (
         <div className="bg-gray-50 dark:bg-[#121212] min-h-screen transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8">
 
@@ -233,9 +226,8 @@ export default function Profile() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center px-4"
+                        className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
                     >
-                        {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -243,17 +235,15 @@ export default function Profile() {
                             onClick={closeSettings}
                             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         />
-
-                        {/* Window */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                            className="relative w-full max-w-lg bg-white dark:bg-[#1A1A1A] rounded-[2rem] shadow-2xl border border-gray-100 dark:border-white/5 overflow-hidden z-10"
+                            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-[#1A1A1A] rounded-[2rem] shadow-2xl border border-gray-100 dark:border-white/5 z-10"
                         >
                             {/* Header */}
-                            <div className="flex items-center justify-between px-8 pt-8 pb-0">
+                            <div className="flex items-center justify-between px-6 sm:px-8 pt-6 sm:pt-8 pb-0">
                                 <h2 className="text-xl font-serif italic text-gray-900 dark:text-white font-bold">Settings</h2>
                                 <button onClick={closeSettings} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
                                     <FiX size={16} />
@@ -261,7 +251,7 @@ export default function Profile() {
                             </div>
 
                             {/* Settings Tabs */}
-                            <div className="flex gap-0 px-8 mt-5 border-b border-gray-100 dark:border-white/5">
+                            <div className="flex px-6 sm:px-8 mt-5 border-b border-gray-100 dark:border-white/5">
                                 {SETTINGS_TABS.map(t => (
                                     <button
                                         key={t}
@@ -279,7 +269,7 @@ export default function Profile() {
                             </div>
 
                             {/* Tab Content */}
-                            <div className="p-8">
+                            <div className="p-6 sm:p-8">
                                 <AnimatePresence mode="wait">
                                     <motion.div
                                         key={settingsTab}
@@ -288,12 +278,9 @@ export default function Profile() {
                                         exit={{ opacity: 0, x: -10 }}
                                         transition={{ duration: 0.2 }}
                                     >
-
                                         {/* ── General Tab ── */}
                                         {settingsTab === 'General' && (
                                             <div className="flex flex-col gap-5">
-
-                                                {/* Avatar */}
                                                 <div className="flex items-center gap-4">
                                                     <div className="relative flex-shrink-0">
                                                         <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#D4AF37]/30 bg-gray-100 dark:bg-gray-800">
@@ -301,7 +288,7 @@ export default function Profile() {
                                                                 <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center">
-                                                                    <FiUser size={24} className="text-gray-400" />
+                                                                    <FiUser size={24} className="text-gray-400 dark:text-gray-500" />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -312,20 +299,14 @@ export default function Profile() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-gray-900 dark:text-white">{fullName}</p>
-                                                        <p className="text-xs text-gray-400 mt-0.5">{userEmail}</p>
+                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{userEmail}</p>
                                                     </div>
                                                 </div>
-
-                                                {/* Name */}
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <EditInput icon={FiUser} type="text" placeholder="First name" value={tempData.firstName} onChange={e => setTempData({ ...tempData, firstName: e.target.value })} />
                                                     <EditInput icon={FiUser} type="text" placeholder="Last name" value={tempData.lastName} onChange={e => setTempData({ ...tempData, lastName: e.target.value })} />
                                                 </div>
-
-                                                {/* Phone */}
                                                 <EditInput icon={FiPhone} type="tel" placeholder="Phone number" value={tempData.phone} onChange={e => setTempData({ ...tempData, phone: e.target.value.replace(/[^0-9]/g, '') })} />
-
-                                                {/* Save Button */}
                                                 <motion.button
                                                     whileTap={{ scale: 0.97 }}
                                                     onClick={handleSave}
@@ -340,62 +321,55 @@ export default function Profile() {
                                         {/* ── Security Tab ── */}
                                         {settingsTab === 'Security' && (
                                             <div className="flex flex-col gap-4">
-
-                                                {/* Change Email */}
-                                                <div className="p-4 rounded-2xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/3">
-                                                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mb-3">Email Address</p>
-                                                    <div className="flex items-center gap-3">
-                                                        {editingEmail ? (
-                                                            <>
-                                                                <div className="relative flex-1">
-                                                                    <FiMail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                                    <input
-                                                                        type="email"
-                                                                        value={newEmail}
-                                                                        onChange={e => setNewEmail(e.target.value)}
-                                                                        // التعديل هنا: جعل الـ input متماشي مع الدارك مود بتاع الـ General Settings
-                                                                        className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm outline-none focus:border-[#D4AF37] transition-colors"
-                                                                    />
-                                                                </div>
+                                                <div className="p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#222]">
+                                                    <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold mb-3">Email Address</p>
+                                                    {editingEmail ? (
+                                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                                            <div className="relative flex-1">
+                                                                <FiMail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                                <input
+                                                                    type="email"
+                                                                    value={newEmail}
+                                                                    onChange={e => setNewEmail(e.target.value)}
+                                                                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#2A2A2A] text-gray-900 dark:text-white text-sm outline-none focus:border-[#D4AF37] transition-colors"
+                                                                />
+                                                            </div>
+                                                            <div className="flex gap-2 flex-shrink-0">
                                                                 <motion.button
                                                                     whileTap={{ scale: 0.95 }}
                                                                     onClick={() => setShowEmailPassModal(true)}
                                                                     disabled={newEmail === userEmail || !newEmail}
-                                                                    className="px-4 py-2.5 rounded-xl bg-[#D4AF37] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#B8860B] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                                                                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[#D4AF37] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#B8860B] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                                                 >
                                                                     Save
                                                                 </motion.button>
                                                                 <button
                                                                     onClick={() => { setEditingEmail(false); setNewEmail(userEmail); }}
-                                                                    className="p-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex-shrink-0"
+                                                                    className="p-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                                                                 >
                                                                     <FiX size={13} />
                                                                 </button>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <div className="flex items-center gap-2 flex-1">
-                                                                    <FiMail size={13} className="text-gray-400 flex-shrink-0" />
-                                                                    {/* التعديل هنا: ظبط درجة لون النص في الدارك مود */}
-                                                                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{userEmail}</span>
-                                                                </div>
-                                                                <motion.button
-                                                                    whileTap={{ scale: 0.95 }}
-                                                                    onClick={() => setEditingEmail(true)}
-                                                                    // التعديل هنا: زرار الـ Change بقى متناسق مع الدارك مود
-                                                                    className="px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all flex-shrink-0"
-                                                                >
-                                                                    Change
-                                                                </motion.button>
-                                                            </>
-                                                        )}
-                                                    </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                <FiMail size={13} className="text-gray-400 flex-shrink-0" />
+                                                                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">{userEmail}</span>
+                                                            </div>
+                                                            <motion.button
+                                                                whileTap={{ scale: 0.95 }}
+                                                                onClick={() => setEditingEmail(true)}
+                                                                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all flex-shrink-0"
+                                                            >
+                                                                Change
+                                                            </motion.button>
+                                                        </div>
+                                                    )}
                                                 </div>
-
-                                                {/* Delete Account */}
-                                                <div className="p-4 rounded-2xl border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/5">
+                                                <div className="p-4 rounded-2xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10">
                                                     <p className="text-[10px] uppercase tracking-[0.2em] text-red-400 font-bold mb-1">Danger Zone</p>
-                                                    <p className="text-xs text-gray-400 mb-3">Once deleted, your account cannot be recovered.</p>
+                                                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Once deleted, your account cannot be recovered.</p>
                                                     <motion.button
                                                         whileTap={{ scale: 0.97 }}
                                                         onClick={() => setShowDeleteModal(true)}
@@ -406,7 +380,6 @@ export default function Profile() {
                                                 </div>
                                             </div>
                                         )}
-
                                     </motion.div>
                                 </AnimatePresence>
                             </div>
@@ -444,27 +417,34 @@ export default function Profile() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="bg-white dark:bg-gray-900 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-800 p-8 mb-8 transition-colors duration-300"
+                    className="bg-white dark:bg-gray-900 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-8 mb-8 transition-colors duration-300"
                 >
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
 
                         {/* Avatar */}
                         <div className="relative flex-shrink-0">
-                            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#D4AF37]/30 shadow-md bg-gray-100 dark:bg-gray-800">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-[#D4AF37]/30 shadow-md bg-gray-100 dark:bg-gray-800">
                                 {avatar ? (
                                     <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                        <FiUser size={36} className="text-gray-400 dark:text-gray-500" />
+                                        <FiUser size={32} className="text-gray-400 dark:text-gray-500" />
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         {/* Info */}
-                        <div className="flex-1 w-full text-center sm:text-left">
-                            <h1 className="text-2xl font-serif italic font-bold text-gray-900 dark:text-white">{fullName}</h1>
-                            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">{userEmail}</p>
+                        <div className="flex-1 w-full text-center sm:text-left min-w-0">
+                            <div className="flex items-center gap-2 justify-center sm:justify-start">
+                                <h1 className="text-xl sm:text-2xl font-serif italic font-bold text-gray-900 dark:text-white truncate">{fullName}</h1>
+                                {isAdmin && (
+                                    <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20">
+                                        Admin
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1 truncate">{userEmail}</p>
                             {userPhone && (
                                 <p className="text-gray-400 dark:text-gray-500 text-sm mt-0.5 flex items-center gap-1.5 justify-center sm:justify-start">
                                     <FiPhone size={12} /> {userPhone}
@@ -474,18 +454,27 @@ export default function Profile() {
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex gap-2 flex-shrink-0">
+                        <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto justify-center sm:justify-end flex-wrap">
+                            {isAdmin && (
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => navigate('/admin')}
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-[#D4AF37] hover:bg-[#B8860B] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                                >
+                                    <FiLayout size={13} /> Admin Panel
+                                </motion.button>
+                            )}
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={openSettings}
-                                className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all"
                             >
                                 <FiSettings size={13} /> Settings
                             </motion.button>
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleLogout}
-                                className="flex items-center gap-1.5 px-4 py-2 border border-red-200 dark:border-red-800 text-red-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-red-200 dark:border-red-800 text-red-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                             >
                                 <FiLogOut size={13} /> Logout
                             </motion.button>
@@ -496,11 +485,11 @@ export default function Profile() {
                     <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
                         <div className="text-center">
                             <p className="text-2xl font-bold text-gray-900 dark:text-white">{wishlistItems.length}</p>
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mt-1">Saved Items</p>
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold mt-1">Saved Items</p>
                         </div>
                         <div className="text-center">
                             <p className="text-2xl font-bold text-gray-900 dark:text-white">0</p>
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mt-1">Orders</p>
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold mt-1">Orders</p>
                         </div>
                     </div>
                 </motion.div>
