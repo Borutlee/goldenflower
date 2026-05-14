@@ -14,7 +14,7 @@ import ScrollToTop from './Components/scrollToTop';
 import { useTheme } from './Context/ThemeContext'
 import ProtectedRoute from './Components/ProtectedRoute';
 import ProtectedAdminRoute from './Components/ProtectedAdminRoute';
-import AdminPanel from './pages/AdminPanel';
+import AdminPanel from './Pages/AdminPanel';
 
 
 function App() {
