@@ -8,14 +8,15 @@ export const Hero = () => {
 
     return (
         <section className="body-font bg-white dark:bg-[#121212] transition-colors duration-300 overflow-hidden">
-            <div className="container mx-auto flex px-5 pt-10 pb-24 md:flex-row flex-col items-center">
+            {/* التعديل هنا: غيرنا flex-col لـ flex-col-reverse وعملنا حساب المسافات في الـ md */}
+            <div className="container mx-auto flex px-5 pt-10 pb-24 md:flex-row flex-col-reverse items-center gap-12 md:gap-0">
 
                 {/* النص */}
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: entranceDelay, ease: "easeOut" }}
-                    className="lg:flex-grow md:w-1/2 lg:pr-24 md:pr-16 flex flex-col md:items-start md:text-left mb-16 md:mb-0 items-center text-center"
+                    className="lg:flex-grow md:w-1/2 lg:pr-24 md:pr-16 flex flex-col md:items-start md:text-left items-center text-center"
                 >
                     <h1 className="title-font sm:text-6xl text-4xl mb-6 font-black text-gray-900 dark:text-white leading-[1.1] transition-colors duration-300">
                         Perfect Perfumes for
@@ -47,12 +48,12 @@ export const Hero = () => {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8, delay: entranceDelay + 0.3, ease: "easeOut" }}
-                    className="relative w-full max-w-[320px] sm:max-w-[420px] lg:max-w-lg aspect-square mx- rounded-[2rem]"
+                    className="relative w-full max-w-[320px] sm:max-w-[420px] lg:max-w-lg aspect-square rounded-[2rem]"
                 >
                     <div className="absolute -top-4 -right-4 w-72 h-72 bg-yellow-50 dark:bg-yellow-900/10 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob" />
                     <img
                         loading="lazy"
-                        className="relative object-cover object-center rounded-[2rem] shadow-2xl transition-transform duration-500 w-full h-full hover:scale-[1.02] "
+                        className="relative object-cover object-center rounded-[2rem] shadow-2xl transition-transform duration-500 w-full h-full hover:scale-[1.02]"
                         alt="Golden Perfume"
                         src={heropic}
                     />
