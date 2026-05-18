@@ -7,9 +7,9 @@ import { FiPackage, FiShoppingBag, FiTag, FiUsers, FiLogOut } from 'react-icons/
 import { IoFlowerOutline } from 'react-icons/io5';
 import { logout } from '../supabase/authService';
 import ProductsTab from '../Components/ProductsTap';
-import OrdersTab from '../components/OrdersTab';
-import PromoCodesTab from '../components/PromoCodesTab';
-import UsersTab from '../components/UsersTab';
+import OrdersTab from '../Components/OrdersTab';
+import PromoCodesTab from '../Components/PromoCodesTab';
+import UsersTab from '../Components/UsersTab';
 
 const TABS = [
     { id: 'products',    label: 'Products',    icon: FiPackage },
