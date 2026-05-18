@@ -7,12 +7,11 @@ import 'react-toastify/dist/ReactToastify.css';
 import {
     FiPackage, FiShoppingBag, FiTag, FiUsers,
     FiPlus, FiEdit2, FiTrash2, FiX, FiSave,
-    FiCheck, FiToggleLeft, FiToggleRight, FiLogOut
+    FiToggleLeft, FiToggleRight, FiLogOut
 } from 'react-icons/fi';
 import { IoFlowerOutline } from 'react-icons/io5';
 import { logout } from '../supabase/authService';
 
-// ━━ Reusable Input ━━
 const Field = ({ label, ...props }) => (
     <div className="flex flex-col gap-1.5">
         <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-gray-400">{label}</label>
@@ -35,7 +34,6 @@ const Select = ({ label, children, ...props }) => (
     </div>
 );
 
-// ━━ Status Badge ━━
 const StatusBadge = ({ status }) => {
     const styles = {
         Pending:    'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800',
@@ -52,19 +50,17 @@ const StatusBadge = ({ status }) => {
 };
 
 const TABS = [
-    { id: 'products',     label: 'Products',     icon: FiPackage },
-    { id: 'orders',       label: 'Orders',       icon: FiShoppingBag },
-    { id: 'promo_codes',  label: 'Promo Codes',  icon: FiTag },
-    { id: 'users',        label: 'Users',        icon: FiUsers },
+    { id: 'products',    label: 'Products',    icon: FiPackage },
+    { id: 'orders',      label: 'Orders',      icon: FiShoppingBag },
+    { id: 'promo_codes', label: 'Promo Codes', icon: FiTag },
+    { id: 'users',       label: 'Users',       icon: FiUsers },
 ];
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export default function AdminPanel() {
     const [activeTab, setActiveTab] = useState('products');
     const navigate = useNavigate();
 
-    // ━━ Products State ━━
+    // ━━ Products ━━
     const [products, setProducts] = useState([]);
     const [productsLoading, setProductsLoading] = useState(true);
     const [showProductForm, setShowProductForm] = useState(false);
@@ -74,21 +70,20 @@ export default function AdminPanel() {
         image: '', category: 'men', rating: '', in_stock: true
     });
 
-    // ━━ Orders State ━━
+    // ━━ Orders ━━
     const [orders, setOrders] = useState([]);
     const [ordersLoading, setOrdersLoading] = useState(true);
 
-    // ━━ Promo Codes State ━━
+    // ━━ Promo Codes ━━
     const [promoCodes, setPromoCodes] = useState([]);
     const [promoLoading, setPromoLoading] = useState(true);
     const [showPromoForm, setShowPromoForm] = useState(false);
     const [promoForm, setPromoForm] = useState({ code: '', discount: '', type: 'percentage' });
 
-    // ━━ Users State ━━
+    // ━━ Users ━━
     const [users, setUsers] = useState([]);
     const [usersLoading, setUsersLoading] = useState(true);
 
-    // ━━━━ Fetch Data ━━━━
     useEffect(() => { fetchProducts(); }, []);
     useEffect(() => { if (activeTab === 'orders') fetchOrders(); }, [activeTab]);
     useEffect(() => { if (activeTab === 'promo_codes') fetchPromoCodes(); }, [activeTab]);
@@ -97,32 +92,38 @@ export default function AdminPanel() {
     const fetchProducts = async () => {
         setProductsLoading(true);
         const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
-        if (!error) setProducts(data);
+        if (!error) setProducts(data || []);
         setProductsLoading(false);
     };
 
     const fetchOrders = async () => {
         setOrdersLoading(true);
         const { data, error } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-        if (!error) setOrders(data);
+        if (!error) setOrders(data || []);
         setOrdersLoading(false);
     };
 
     const fetchPromoCodes = async () => {
         setPromoLoading(true);
         const { data, error } = await supabase.from('promo_codes').select('*').order('created_at', { ascending: false });
-        if (!error) setPromoCodes(data);
+        if (!error) setPromoCodes(data || []);
         setPromoLoading(false);
     };
 
     const fetchUsers = async () => {
         setUsersLoading(true);
-        const { data, error } = await supabase.functions.invoke('get-users');
-        if (!error && data) setUsers(data.users || []);
-        setUsersLoading(false);
+        try {
+            const { data, error } = await supabase.functions.invoke('get-users');
+            if (error) throw error;
+            setUsers(data?.users || []);
+        } catch (err) {
+            toast.error(err.message);
+        } finally {
+            setUsersLoading(false);
+        }
     };
 
-    // ━━━━ Products CRUD ━━━━
+    // ━━ Products CRUD ━━
     const handleProductSubmit = async () => {
         if (!productForm.name || !productForm.price) {
             toast.error('Name and price are required.');
@@ -172,7 +173,7 @@ export default function AdminPanel() {
         fetchProducts();
     };
 
-    // ━━━━ Orders ━━━━
+    // ━━ Orders ━━
     const handleUpdateOrderStatus = async (id, status) => {
         const { error } = await supabase.from('orders').update({ status }).eq('id', id);
         if (error) { toast.error(error.message); return; }
@@ -180,7 +181,7 @@ export default function AdminPanel() {
         fetchOrders();
     };
 
-    // ━━━━ Promo Codes ━━━━
+    // ━━ Promo Codes ━━
     const handleAddPromo = async () => {
         if (!promoForm.code || !promoForm.discount) {
             toast.error('Code and discount are required.');
@@ -228,10 +229,7 @@ export default function AdminPanel() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="text-[10px] uppercase tracking-wider font-bold text-gray-400 hover:text-[#D4AF37] transition-colors"
-                    >
+                    <button onClick={() => navigate('/')} className="text-[10px] uppercase tracking-wider font-bold text-gray-400 hover:text-[#D4AF37] transition-colors">
                         View Store
                     </button>
                     <button
@@ -252,10 +250,7 @@ export default function AdminPanel() {
                             key={id}
                             onClick={() => setActiveTab(id)}
                             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] transition-all whitespace-nowrap flex-1 justify-center
-                                ${activeTab === id
-                                    ? 'bg-[#D4AF37] text-white shadow-md'
-                                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                                }`}
+                                ${activeTab === id ? 'bg-[#D4AF37] text-white shadow-md' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
                         >
                             <Icon size={13} /> {label}
                         </button>
@@ -271,7 +266,7 @@ export default function AdminPanel() {
                         transition={{ duration: 0.2 }}
                     >
 
-                        {/* ━━━━ Products Tab ━━━━ */}
+                        {/* ━━━━ Products ━━━━ */}
                         {activeTab === 'products' && (
                             <div>
                                 <div className="flex items-center justify-between mb-6">
@@ -287,7 +282,6 @@ export default function AdminPanel() {
                                     </motion.button>
                                 </div>
 
-                                {/* Product Form */}
                                 <AnimatePresence>
                                     {showProductForm && (
                                         <motion.div
@@ -320,11 +314,7 @@ export default function AdminPanel() {
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-gray-400">In Stock</label>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setProductForm({ ...productForm, in_stock: !productForm.in_stock })}
-                                                        className={`transition-colors ${productForm.in_stock ? 'text-[#D4AF37]' : 'text-gray-400'}`}
-                                                    >
+                                                    <button type="button" onClick={() => setProductForm({ ...productForm, in_stock: !productForm.in_stock })} className={`transition-colors ${productForm.in_stock ? 'text-[#D4AF37]' : 'text-gray-400'}`}>
                                                         {productForm.in_stock ? <FiToggleRight size={24} /> : <FiToggleLeft size={24} />}
                                                     </button>
                                                 </div>
@@ -341,7 +331,6 @@ export default function AdminPanel() {
                                     )}
                                 </AnimatePresence>
 
-                                {/* Products List */}
                                 {productsLoading ? (
                                     <div className="text-center py-16 text-gray-400">Loading...</div>
                                 ) : products.length === 0 ? (
@@ -349,11 +338,7 @@ export default function AdminPanel() {
                                 ) : (
                                     <div className="grid grid-cols-1 gap-3">
                                         {products.map(product => (
-                                            <motion.div
-                                                key={product.id}
-                                                layout
-                                                className="bg-white dark:bg-[#141414] rounded-2xl border border-gray-100 dark:border-white/5 p-4 flex items-center gap-4"
-                                            >
+                                            <motion.div key={product.id} layout className="bg-white dark:bg-[#141414] rounded-2xl border border-gray-100 dark:border-white/5 p-4 flex items-center gap-4">
                                                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                                                     {product.image ? (
                                                         <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -385,7 +370,7 @@ export default function AdminPanel() {
                             </div>
                         )}
 
-                        {/* ━━━━ Orders Tab ━━━━ */}
+                        {/* ━━━━ Orders ━━━━ */}
                         {activeTab === 'orders' && (
                             <div>
                                 <h2 className="text-lg font-serif italic font-bold text-gray-900 dark:text-white mb-6">
@@ -434,23 +419,18 @@ export default function AdminPanel() {
                             </div>
                         )}
 
-                        {/* ━━━━ Promo Codes Tab ━━━━ */}
+                        {/* ━━━━ Promo Codes ━━━━ */}
                         {activeTab === 'promo_codes' && (
                             <div>
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-lg font-serif italic font-bold text-gray-900 dark:text-white">
                                         Promo Codes <span className="text-gray-400 text-sm font-sans not-italic">({promoCodes.length})</span>
                                     </h2>
-                                    <motion.button
-                                        whileTap={{ scale: 0.95 }}
-                                        onClick={() => setShowPromoForm(true)}
-                                        className="flex items-center gap-2 px-4 py-2.5 bg-[#D4AF37] hover:bg-[#B8860B] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-                                    >
+                                    <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowPromoForm(true)} className="flex items-center gap-2 px-4 py-2.5 bg-[#D4AF37] hover:bg-[#B8860B] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
                                         <FiPlus size={13} /> Add Code
                                     </motion.button>
                                 </div>
 
-                                {/* Promo Form */}
                                 <AnimatePresence>
                                     {showPromoForm && (
                                         <motion.div
@@ -485,7 +465,6 @@ export default function AdminPanel() {
                                     )}
                                 </AnimatePresence>
 
-                                {/* Promo List */}
                                 {promoLoading ? (
                                     <div className="text-center py-16 text-gray-400">Loading...</div>
                                 ) : promoCodes.length === 0 ? (
@@ -518,7 +497,7 @@ export default function AdminPanel() {
                             </div>
                         )}
 
-                        {/* ━━━━ Users Tab ━━━━ */}
+                        {/* ━━━━ Users ━━━━ */}
                         {activeTab === 'users' && (
                             <div>
                                 <h2 className="text-lg font-serif italic font-bold text-gray-900 dark:text-white mb-6">
@@ -531,9 +510,20 @@ export default function AdminPanel() {
                                 ) : (
                                     <div className="grid grid-cols-1 gap-3">
                                         {users.map(u => (
-                                            <div key={u.id} className="bg-white dark:bg-[#141414] rounded-2xl border border-gray-100 dark:border-white/5 p-4 flex items-center gap-4">
+                                            <motion.div
+                                                key={u.id}
+                                                whileHover={{ x: 4 }}
+                                                onClick={() => navigate(`/admin/users/${u.id}`)}
+                                                className="bg-white dark:bg-[#141414] rounded-2xl border border-gray-100 dark:border-white/5 p-4 flex items-center gap-4 cursor-pointer hover:border-[#D4AF37]/30 transition-all"
+                                            >
                                                 <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center flex-shrink-0">
-                                                    <FiUsers size={16} className="text-[#D4AF37]" />
+                                                    {u.user_metadata?.avatar_url ? (
+                                                        <img src={u.user_metadata.avatar_url} className="w-full h-full rounded-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-sm font-black text-[#D4AF37]">
+                                                            {(u.user_metadata?.first_name?.[0] || u.email?.[0] || '?').toUpperCase()}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-bold text-gray-900 dark:text-white text-sm truncate">
@@ -541,14 +531,15 @@ export default function AdminPanel() {
                                                     </p>
                                                     <p className="text-xs text-gray-400 truncate">{u.email}</p>
                                                 </div>
-                                                <div className="flex-shrink-0">
+                                                <div className="flex items-center gap-2 flex-shrink-0">
                                                     {u.user_metadata?.role === 'admin' && (
                                                         <span className="text-[10px] font-bold uppercase px-2 py-1 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
                                                             Admin
                                                         </span>
                                                     )}
+                                                    <span className="text-gray-300 dark:text-gray-600 text-xs">→</span>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         ))}
                                     </div>
                                 )}

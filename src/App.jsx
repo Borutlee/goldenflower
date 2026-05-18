@@ -15,6 +15,9 @@ import { useTheme } from './Context/ThemeContext'
 import ProtectedRoute from './Components/ProtectedRoute';
 import ProtectedAdminRoute from './Components/ProtectedAdminRoute';
 import AdminPanel from './Pages/AdminPanel';
+import AdminUserProfile from './Pages/AdminUserProfile';
+
+
 
 
 function App() {
@@ -50,6 +53,9 @@ function App() {
             <AdminPanel />
           </ProtectedAdminRoute>
         } />
+
+        <Route path="/admin/users/:id" element={<ProtectedAdminRoute><AdminUserProfile /></ProtectedAdminRoute>} />
+
 
 
         {/* ✅ Route الـ SingleProduct */}
