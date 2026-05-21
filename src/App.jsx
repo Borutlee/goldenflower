@@ -16,6 +16,7 @@ import ProtectedRoute from './Components/ProtectedRoute';
 import ProtectedAdminRoute from './Components/ProtectedAdminRoute';
 import AdminPanel from './Pages/AdminPanel';
 import AdminUserProfile from './Pages/AdminUserProfile';
+import Checkout from './Pages/Checkout'
 
 
 
@@ -41,6 +42,8 @@ function App() {
         <Route path="/contact" element={<Contact />} />
 
         <Route path="/Auth" element={<Auth />} />
+
+        <Route path="/Checkout" element={<Checkout />} />
 
         <Route path="/userProfile" element={
           <ProtectedRoute>

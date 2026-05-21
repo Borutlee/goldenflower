@@ -180,6 +180,7 @@ export default function Cart() {
                                 whileHover={{ y: -2 }}
                                 whileTap={{ scale: 0.98 }}
                                 className="w-full flex items-center justify-center gap-3 bg-gray-900 dark:bg-[#D4AF37] text-white py-5 rounded-[1.5rem] font-bold uppercase text-[11px] tracking-[0.2em] hover:shadow-2xl transition-all duration-300 group"
+                                onClick={() => navigate('/Checkout')}
                             >
                                 Proceed to Checkout
                                 <FiArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-300" />

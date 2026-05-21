@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase/supabaseClient';
 import { toast } from 'react-toastify';
+import { FiSearch } from 'react-icons/fi'; // استيراد أيقونة البحث
 
 export default function UsersTab() {
     const [users, setUsers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState(''); // State لتخزين نص البحث
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -24,18 +26,48 @@ export default function UsersTab() {
         }
     };
 
+    // فلترة المستخدمين بناءً على الاسم الأول، الاسم الأخير، أو الإيميل
+    const filteredUsers = users.filter(u => {
+        const firstName = u.user_metadata?.first_name?.toLowerCase() || '';
+        const lastName = u.user_metadata?.last_name?.toLowerCase() || '';
+        const fullName = `${firstName} ${lastName}`.trim();
+        const email = u.email?.toLowerCase() || '';
+        const search = searchTerm.toLowerCase();
+    
+        return fullName.includes(search) || email.includes(search);
+    });
+
     return (
         <div>
-            <h2 className="text-lg font-serif italic font-bold text-gray-900 dark:text-white mb-6">
-                Users <span className="text-gray-400 text-sm font-sans not-italic">({users.length})</span>
-            </h2>
+            {/* الهيدر الخاص بالتاب مع خانة البحث */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h2 className="text-lg font-serif italic font-bold text-gray-900 dark:text-white">
+                    Users <span className="text-gray-400 text-sm font-sans not-italic">({filteredUsers.length} / {users.length})</span>
+                </h2>
+
+                {/* شريط البحث المضاف */}
+                <div className="relative w-full sm:w-72">
+                    <input
+                        type="text"
+                        placeholder="Search by name or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-100 dark:border-white/5 bg-white dark:bg-[#141414] text-gray-900 dark:text-white text-xs font-medium focus:outline-none focus:border-[#D4AF37]/50 transition-all placeholder-gray-400"
+                    />
+                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                </div>
+            </div>
+
             {loading ? (
                 <div className="text-center py-16 text-gray-400">Loading...</div>
-            ) : users.length === 0 ? (
-                <div className="text-center py-16 text-gray-400 font-serif italic">No users yet</div>
+            ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-16 text-gray-400 font-serif italic">
+                    {searchTerm ? "No users match your search" : "No users yet"}
+                </div>
             ) : (
                 <div className="grid grid-cols-1 gap-3">
-                    {users.map(u => (
+                    {/* هنا بنعرض الـ filteredUsers المشتقة بدل الـ users الأساسية */}
+                    {filteredUsers.map(u => (
                         <motion.div
                             key={u.id}
                             whileHover={{ x: 4 }}
@@ -44,7 +76,7 @@ export default function UsersTab() {
                         >
                             <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center flex-shrink-0">
                                 {u.user_metadata?.avatar_url ? (
-                                    <img src={u.user_metadata.avatar_url} className="w-full h-full rounded-full object-cover" />
+                                    <img src={u.user_metadata.avatar_url} className="w-full h-full rounded-full object-cover" alt="avatar" />
                                 ) : (
                                     <span className="text-sm font-black text-[#D4AF37]">
                                         {(u.user_metadata?.first_name?.[0] || u.email?.[0] || '?').toUpperCase()}
