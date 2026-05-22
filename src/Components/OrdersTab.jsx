@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabase/supabaseClient';
 import { toast } from 'react-toastify';
-import { FiX, FiUser, FiPhone, FiMapPin, FiClock, FiShoppingBag, FiMail, FiLayers } from 'react-icons/fi';
+import { FiX, FiUser, FiPhone, FiMapPin, FiClock, FiShoppingBag, FiMail, FiLayers, FiSearch, FiFilter } from 'react-icons/fi';
 
 const StatusBadge = ({ status }) => {
     const styles = {
@@ -22,6 +22,8 @@ export default function OrdersTab() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [searchTerm, setSearchTerm] = useState(''); // لفلترة البحث
+    const [activeTab, setActiveTab] = useState('Pending'); // التاب النشطة حالياً
 
     useEffect(() => { fetchOrders(); }, []);
 
@@ -33,10 +35,10 @@ export default function OrdersTab() {
     };
 
     const handleUpdateStatus = async (id, status, e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         const { error } = await supabase.from('orders').update({ status }).eq('id', id);
         if (error) { toast.error(error.message); return; }
-        toast.success('Status updated!');
+        toast.success(`Order marked as ${status}`);
         
         if (selectedOrder && selectedOrder.id === id) {
             setSelectedOrder(prev => ({ ...prev, status }));
@@ -44,169 +46,224 @@ export default function OrdersTab() {
         fetchOrders();
     };
 
+    // دالة لجلب عدد الأوردرات في كل حالة
+    const getCount = (status) => {
+        if (status === 'Finished') {
+            return orders.filter(o => o.status === 'Delivered' || o.status === 'Cancelled').length;
+        }
+        return orders.filter(o => o.status === status).length;
+    };
+
+    // دالة البحث والفلترة النهائية
+    const filteredOrders = orders.filter(order => {
+        const matchesSearch = 
+            order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.phone?.includes(searchTerm) ||
+            order.user_email?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesTab = 
+            activeTab === 'Finished' 
+                ? (order.status === 'Delivered' || order.status === 'Cancelled')
+                : order.status === activeTab;
+
+        return matchesSearch && matchesTab;
+    });
+
     const getParsedItems = (itemsField) => {
         if (!itemsField) return [];
         if (Array.isArray(itemsField)) return itemsField;
-        try {
-            return JSON.parse(itemsField);
-        } catch (e) {
-            return [];
-        }
+        try { return JSON.parse(itemsField); } catch (e) { return []; }
     };
 
     return (
-        <div>
-            <h2 className="text-lg font-serif italic font-bold text-gray-900 dark:text-white mb-6">
-                Orders Management <span className="text-gray-400 text-sm font-sans not-italic">({orders.length})</span>
-            </h2>
+        <div className="max-w-6xl mx-auto">
+            {/* Header Section مع البحث */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h2 className="text-2xl font-serif italic font-bold text-gray-900 dark:text-white">
+                        Orders Terminal
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-1">Manage your boutique flow and customer fulfillment</p>
+                </div>
+                
+                <div className="relative group">
+                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#D4AF37] transition-colors" />
+                    <input 
+                        type="text" 
+                        placeholder="Search by name, phone or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full md:w-80 pl-10 pr-4 py-2.5 bg-white dark:bg-[#141414] border border-gray-100 dark:border-white/5 rounded-xl text-xs outline-none focus:border-[#D4AF37]/50 transition-all shadow-sm"
+                    />
+                </div>
+            </div>
+
+            {/* Tabs System - التقسيمة الاحترافية */}
+            <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-gray-100 dark:border-white/5 pb-1">
+                {['Pending', 'Processing', 'Shipped', 'Finished'].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest transition-all relative flex items-center gap-2
+                            ${activeTab === tab 
+                                ? 'text-[#D4AF37]' 
+                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'}`}
+                    >
+                        {tab}
+                        <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${activeTab === tab ? 'bg-[#D4AF37]/10' : 'bg-gray-100 dark:bg-white/5'}`}>
+                            {getCount(tab)}
+                        </span>
+                        {activeTab === tab && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#D4AF37] animate-fade-in" />
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Orders Grid */}
             {loading ? (
-                <div className="text-center py-16 text-gray-400">Loading orders...</div>
-            ) : orders.length === 0 ? (
-                <div className="text-center py-16 text-gray-400 font-serif italic">No orders yet</div>
+                <div className="text-center py-24 text-gray-400 animate-pulse">Synchronizing database...</div>
+            ) : filteredOrders.length === 0 ? (
+                <div className="text-center py-24 bg-white dark:bg-[#141414] rounded-3xl border border-dashed border-gray-200 dark:border-white/5">
+                    <FiLayers className="w-10 h-10 mx-auto text-gray-200 dark:text-white/5 mb-4" />
+                    <p className="text-gray-400 font-serif italic text-sm">No {activeTab.toLowerCase()} orders found</p>
+                </div>
             ) : (
-                <div className="grid grid-cols-1 gap-3">
-                    {orders.map(order => {
-                        const parsedItems = getParsedItems(order.items);
-                        return (
-                            <div 
-                                key={order.id} 
-                                onClick={() => setSelectedOrder(order)}
-                                className="bg-white dark:bg-[#141414] rounded-2xl border border-gray-100 dark:border-white/5 p-5 cursor-pointer hover:border-[#D4AF37]/40 dark:hover:border-[#D4AF37]/40 transition-all duration-200 shadow-sm hover:shadow-md"
-                            >
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-900 dark:text-white">
-                                            {order.customer_name || 'Anonymous Guest'}
-                                        </p>
-                                        <p className="text-[10px] text-gray-400 mt-0.5">
-                                            {order.user_email} {' • '}
-                                            {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                            {' • '} {order.total} EGP
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <StatusBadge status={order.status} />
-                                        <select
-                                            value={order.status}
-                                            onChange={e => handleUpdateStatus(order.id, e.target.value, e)}
-                                            className="text-[10px] font-bold uppercase px-2 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#222] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
-                                        >
-                                            {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(s => (
-                                                <option key={s} value={s}>{s}</option>
-                                            ))}
-                                        </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {filteredOrders.map(order => (
+                        <div 
+                            key={order.id} 
+                            onClick={() => setSelectedOrder(order)}
+                            className="bg-white dark:bg-[#141414] rounded-2xl border border-gray-100 dark:border-white/5 p-5 cursor-pointer hover:shadow-xl hover:border-[#D4AF37]/20 transition-all duration-300 group"
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="space-y-1">
+                                    <h4 className="text-xs font-black text-gray-900 dark:text-white group-hover:text-[#D4AF37] transition-colors uppercase tracking-tight">
+                                        {order.customer_name || 'Guest User'}
+                                    </h4>
+                                    <div className="flex items-center gap-2 text-[10px] text-gray-400 font-mono">
+                                        <FiPhone className="text-[9px]" /> {order.phone || 'No Phone'}
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {parsedItems.map((item, i) => (
-                                        <span key={i} className="text-[10px] bg-gray-50 dark:bg-[#222] border border-gray-100 dark:border-white/5 px-2 py-1 rounded-lg text-gray-600 dark:text-gray-400">
-                                            {/* 👈 تجربة قراءة كل أشكال الـ Keys الممكنة للاسم الحقيقي */}
-                                            {item.title || item.Title || item.name || item.Name || item.product?.title || item.product?.name || 'Product'} x{item.quantity || 1}
-                                        </span>
-                                    ))}
+                                <StatusBadge status={order.status} />
+                            </div>
+
+                            <div className="flex flex-wrap gap-1.5 mb-5 h-12 overflow-hidden items-start">
+                                {getParsedItems(order.items).map((item, i) => (
+                                    <span key={i} className="text-[9px] bg-gray-50 dark:bg-[#1c1c1c] border border-gray-100 dark:border-white/5 px-2 py-1 rounded-md text-gray-500">
+                                        {item.title || item.name || 'Product'} <span className="text-[#D4AF37] font-bold">x{item.quantity}</span>
+                                    </span>
+                                ))}
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-50 dark:border-white/5 flex items-center justify-between">
+                                <div className="text-[10px] text-gray-400">
+                                    {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </div>
+                                <div className="text-xs font-black text-gray-900 dark:text-white">
+                                    {order.total} <span className="text-[9px] font-normal text-gray-400">EGP</span>
                                 </div>
                             </div>
-                        );
-                    })}
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* ==================== 🚨 الـ Pop-up Window 🚨 ==================== */}
+            {/* ==================== 📦 Pop-up Window 📦 ==================== */}
             {selectedOrder && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-[#141414] w-full max-w-lg rounded-2xl border border-gray-100 dark:border-white/5 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white dark:bg-[#0f0f0f] w-full max-w-xl rounded-[2rem] border border-gray-100 dark:border-white/5 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
                         
-                        <div className="p-5 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-[#1a1a1a]">
-                            <div>
-                                <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <FiLayers className="text-[#D4AF37]" /> Process Order
-                                </h3>
-                                <p className="text-[10px] text-gray-400 font-mono mt-0.5">ID: {selectedOrder.id}</p>
+                        {/* Modal Header */}
+                        <div className="p-6 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-[#161616]">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-[#D4AF37]/10 rounded-full flex items-center justify-center text-[#D4AF37]">
+                                    <FiShoppingBag />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider">Review Order</h3>
+                                    <p className="text-[10px] text-gray-400 font-mono mt-0.5">#{selectedOrder.id.slice(0,12)}</p>
+                                </div>
                             </div>
-                            <button onClick={() => setSelectedOrder(null)} className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#252525] text-gray-400 hover:text-gray-700 dark:hover:text-white transition-all">
-                                <FiX className="w-4 h-4" />
+                            <button onClick={() => setSelectedOrder(null)} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/5 text-gray-400 transition-all">
+                                <FiX className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto space-y-5 text-xs">
+                        {/* Modal Content */}
+                        <div className="p-8 overflow-y-auto space-y-8">
                             
-                            {/* Contact */}
-                            <div className="space-y-2">
-                                <h4 className="text-[11px] font-black uppercase text-[#D4AF37] tracking-wider">Customer Contact</h4>
-                                <div className="bg-gray-50 dark:bg-[#1c1c1c] p-4 rounded-xl space-y-3 border border-gray-100 dark:border-white/5">
-                                    <div className="flex items-center gap-2.5 text-gray-700 dark:text-gray-300">
-                                        <FiUser className="text-gray-400 shrink-0" />
-                                        <span className="font-bold text-gray-900 dark:text-white">{selectedOrder.customer_name || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2.5 text-gray-700 dark:text-gray-300">
-                                        <FiPhone className="text-gray-400 shrink-0" />
-                                        <span className="font-mono font-bold">{selectedOrder.phone || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2.5 text-gray-700 dark:text-gray-300">
-                                        <FiMail className="text-gray-400 shrink-0" />
-                                        <span>{selectedOrder.user_email || 'N/A'}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Shipping */}
-                            <div className="space-y-2">
-                                <h4 className="text-[11px] font-black uppercase text-[#D4AF37] tracking-wider">Shipping Address</h4>
-                                <div className="bg-gray-50 dark:bg-[#1c1c1c] p-4 rounded-xl space-y-3 border border-gray-100 dark:border-white/5">
-                                    <div className="flex items-start gap-2.5 text-gray-700 dark:text-gray-300">
-                                        <FiMapPin className="text-gray-400 mt-0.5 shrink-0" />
-                                        <div>
-                                            <p className="font-black text-gray-900 dark:text-white text-sm">{selectedOrder.governorate || 'N/A'}</p>
-                                            <p className="text-gray-500 dark:text-gray-400 text-[11px] mt-1 leading-relaxed">{selectedOrder.address || 'N/A'}</p>
+                            <div className="grid grid-cols-2 gap-8">
+                                {/* Customer Column */}
+                                <div className="space-y-4">
+                                    <h5 className="text-[10px] font-black uppercase text-[#D4AF37] tracking-[0.2em]">Receiver</h5>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400"><FiUser size={14}/></div>
+                                            <span className="text-xs font-bold dark:text-gray-200">{selectedOrder.customer_name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400"><FiPhone size={14}/></div>
+                                            <span className="text-xs font-mono font-bold text-blue-500">{selectedOrder.phone}</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2.5 text-gray-400 text-[10px] pt-2 border-t border-gray-200 dark:border-white/5">
-                                        <FiClock />
-                                        <span>Order Date: {new Date(selectedOrder.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                                </div>
+
+                                {/* Logistic Column */}
+                                <div className="space-y-4">
+                                    <h5 className="text-[10px] font-black uppercase text-[#D4AF37] tracking-[0.2em]">Logistics</h5>
+                                    <div className="space-y-3 text-xs">
+                                        <div className="flex items-start gap-3">
+                                            <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-lg text-gray-400 shrink-0"><FiMapPin size={14}/></div>
+                                            <div>
+                                                <p className="font-bold dark:text-gray-200">{selectedOrder.governorate}</p>
+                                                <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">{selectedOrder.address}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Items Section */}
-                            <div className="space-y-2">
-                                <h4 className="text-[11px] font-black uppercase text-[#D4AF37] tracking-wider">Products to Pack</h4>
-                                <div className="border border-gray-100 dark:border-white/5 rounded-xl divide-y divide-gray-100 dark:divide-white/5 overflow-hidden">
+                            {/* Items List */}
+                            <div className="space-y-4">
+                                <h5 className="text-[10px] font-black uppercase text-[#D4AF37] tracking-[0.2em]">Package Content</h5>
+                                <div className="bg-gray-50 dark:bg-white/5 rounded-2xl overflow-hidden divide-y divide-gray-200 dark:divide-white/5 border border-gray-100 dark:border-white/5">
                                     {getParsedItems(selectedOrder.items).map((item, i) => (
-                                        <div key={i} className="p-3.5 flex justify-between items-center bg-gray-50/40 dark:bg-[#1c1c1c]/40">
-                                            <div className="flex items-center gap-2.5">
-                                                <FiShoppingBag className="text-gray-400" />
+                                        <div key={i} className="p-4 flex justify-between items-center">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-white dark:bg-[#1a1a1a] rounded-lg flex items-center justify-center text-[#D4AF37] border border-gray-100 dark:border-white/5 text-[10px] font-black">
+                                                    {i + 1}
+                                                </div>
                                                 <div>
-                                                    {/* 👈 هنا صيد المشكلة الأساسية، حطيت كل الاحتمالات عشان يلقط الاسم الفعلي فوراً */}
-                                                    <p className="font-bold text-gray-900 dark:text-white text-[12px]">
-                                                        {item.title || item.Title || item.name || item.Name || item.product?.title || item.product?.name || 'Product'}
-                                                    </p>
-                                                    <p className="text-gray-400 text-[10px] mt-0.5">Unit Price: {item.price || item.Price || item.product?.price || 0} EGP</p>
+                                                    <p className="text-xs font-bold dark:text-white">{item.title || item.name || 'Product'}</p>
+                                                    <p className="text-[10px] text-gray-400 mt-0.5">{item.price} EGP per unit</p>
                                                 </div>
                                             </div>
-                                            <span className="font-black text-sm text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-lg">
-                                                x {item.quantity || 1}
-                                            </span>
+                                            <span className="text-xs font-black text-[#D4AF37]">x{item.quantity}</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-
                         </div>
 
-                        <div className="p-5 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-[#1a1a1a] flex justify-between items-center">
+                        {/* Modal Footer Actions */}
+                        <div className="p-8 border-t border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-[#161616] flex items-center justify-between">
                             <div>
-                                <span className="text-[10px] text-gray-400 font-bold uppercase block">Total Cash Collection</span>
-                                <span className="text-sm font-black text-gray-900 dark:text-white">{selectedOrder.total} EGP</span>
+                                <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Grand Total</p>
+                                <p className="text-xl font-black text-gray-900 dark:text-white">{selectedOrder.total} <span className="text-[10px] font-normal">EGP</span></p>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <select
+                            
+                            <div className="flex items-center gap-3">
+                                <select 
                                     value={selectedOrder.status}
-                                    onChange={e => handleUpdateStatus(selectedOrder.id, e.target.value, e)}
-                                    className="text-[11px] font-bold uppercase px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#222] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                                    onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value)}
+                                    className="px-4 py-2.5 bg-white dark:bg-[#222] border border-gray-200 dark:border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-[#D4AF37] transition-all cursor-pointer"
                                 >
-                                    {['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(s => (
-                                        <option key={s} value={s}>{s}</option>
-                                    ))}
+                                    <option value="Pending">Pending</option>
+                                    <option value="Processing">Processing</option>
+                                    <option value="Shipped">Shipped</option>
+                                    <option value="Delivered">Delivered</option>
+                                    <option value="Cancelled">Cancelled</option>
                                 </select>
                             </div>
                         </div>
