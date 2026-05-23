@@ -13,7 +13,7 @@ import UserProfile from './Pages/userProfile'
 import ScrollToTop from './Components/scrollToTop';
 import { useTheme } from './Context/ThemeContext'
 import ProtectedRoute from './Components/ProtectedRoute';
-import ProtectedAdminRoute from './Components/ProtectedAdminRoute';
+import ProtectedAdminRoute from './Components/Admin/ProtectedAdminRoute';
 import AdminPanel from './Pages/AdminPanel';
 import AdminUserProfile from './Pages/AdminUserProfile';
 import Checkout from './Pages/Checkout'

@@ -6,10 +6,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FiPackage, FiShoppingBag, FiTag, FiUsers, FiLogOut } from 'react-icons/fi';
 import { IoFlowerOutline } from 'react-icons/io5';
 import { logout } from '../supabase/authService';
-import ProductsTab from '../Components/ProductsTap';
-import OrdersTab from '../Components/OrdersTab';
-import PromoCodesTab from '../Components/PromoCodesTab';
-import UsersTab from '../Components/UsersTab';
+import ProductsTab from '../Components/Admin/ProductsTap';
+import OrdersTab from '../Components/Admin/AdminOrders';
+import PromoCodesTab from '../Components/Admin/PromoCodesTab';
+import UsersTab from '../Components/Admin/UsersTab';
 
 const TABS = [
     { id: 'products',    label: 'Products',    icon: FiPackage },
@@ -38,7 +38,7 @@ export default function AdminPanel() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/')} className="text-[10px] uppercase tracking-wider font-bold text-gray-400 hover:text-[#D4AF37] transition-colors">
+                    <button onClick={() => navigate('/products')} className="text-[10px] uppercase tracking-wider font-bold text-gray-400 hover:text-[#D4AF37] transition-colors">
                         View Store
                     </button>
                     <button
