@@ -6,7 +6,7 @@ import { useAuth } from '../../Context/AuthContext';
 import { useWishlist } from '../../Context/wishlistContext';
 import { logout } from '../../supabase/authService';
 
-export default function ProfileHeader({ onOpenSettings }) {
+export default function ProfileHeader({ onOpenSettings , ordersCount}) {
     const { user } = useAuth();
     const { wishlistItems } = useWishlist();
     const navigate = useNavigate();
@@ -103,7 +103,7 @@ export default function ProfileHeader({ onOpenSettings }) {
                     <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold mt-1">Saved Items</p>
                 </div>
                 <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{ordersCount}</p>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold mt-1">Orders</p>
                 </div>
             </div>
