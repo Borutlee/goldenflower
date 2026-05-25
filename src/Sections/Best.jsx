@@ -55,7 +55,7 @@ const BestSellers = () => {
                     ) : (
                         bestSellers.map((product, index) => (
                             <motion.div
-                                key={product._id}
+                                key={product.id}
                                 initial={{ opacity: 0, y: 50 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true, margin: "-50px" }}

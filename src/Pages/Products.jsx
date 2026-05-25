@@ -183,7 +183,7 @@ function Products() {
                     ))
                     : sortedProducts.map((item, index) => (
                         <ProductCard
-                            key={item._id}
+                            key={item.id}
                             product={item}
                             index={index}
                             notes={PRODUCT_NOTES}

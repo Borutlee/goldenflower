@@ -39,8 +39,8 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
     const handleOpen = useCallback(() => setOpen(true), []);
     const handleClose = useCallback(() => setOpen(false), []);
     const handleNavigate = useCallback(() => {
-        navigate(`/products/${product._id}`);
-    }, [navigate, product._id]);
+        navigate(`/products/${product.id}`);
+    }, [navigate, product.id]);
 
     return (
         <>
@@ -82,9 +82,9 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                         <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
                             <FiStar className="text-[#D4AF37] fill-[#D4AF37]" size={10} />
                             <span className="text-[10px] font-bold text-gray-800 dark:text-white">
-                                {product.rating || "4.9"}
+                            {product.rating?.rate || '4.9'}
                             </span>
-                        </div>
+                        </div> 
 
                         {/* Eye Button */}
                         <motion.button

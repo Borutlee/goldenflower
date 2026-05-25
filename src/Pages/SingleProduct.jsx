@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react'; // 1. ضيفنا useRef
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,7 +11,6 @@ import ProductCard from '../Components/ProductCard';
 import { useCart } from '../Context/CartContext';
 import { useWishlist } from '../Context/wishlistContext';
 
-
 const SIZES = ['30ml', '50ml', '100ml'];
 const NOTES = ['Floral', 'Oud', 'Amber', 'Musk'];
 const TABS = ['Description', 'Notes', 'Reviews'];
@@ -19,6 +18,7 @@ const TABS = ['Description', 'Notes', 'Reviews'];
 export default function SingleProduct() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const timeoutRef = useRef(null); // ريف لحفظ التايمر منعاً للـ Memory Leak
 
     const [product, setProduct] = useState(null);
     const [related, setRelated] = useState([]);
@@ -28,7 +28,7 @@ export default function SingleProduct() {
     const [quantity, setQuantity] = useState(1);
 
     const { toggleWishlist, isWishlisted } = useWishlist();
-    const wished = isWishlisted(product?._id);
+    const wished = isWishlisted(product?.id);
 
     const [activeTab, setActiveTab] = useState('Description');
     const [activeImg, setActiveImg] = useState(0);
@@ -49,7 +49,7 @@ export default function SingleProduct() {
             .then(res => {
                 if (Array.isArray(res)) {
                     const filtered = res
-                        .filter(p => p._id !== id)
+                        .filter(p => p.id !== id)
                         .slice(0, 4);
                     setRelated(filtered);
                 }
@@ -58,19 +58,34 @@ export default function SingleProduct() {
                 console.error(err);
                 setLoading(false);
             });
+
+        // Cleanup للـ تايمر لو المستخدم خرج من الصفحة فجأة
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
     }, [id]);
 
     const handleDecrement = useCallback(() => setQuantity(q => Math.max(1, q - 1)), []);
     const handleIncrement = useCallback(() => setQuantity(q => q + 1), []);
     const handleWish = useCallback(() => toggleWishlist(product), [product, toggleWishlist]);
+    
     const handleAddToCart = useCallback(() => {
         addToCart(product, quantity);
         setAdded(true);
-        setTimeout(() => setAdded(false), 2000);
+        
+        // تنظيف التايمر القديم لو ضغط كذا مرة ورا بعض
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        
+        timeoutRef.current = setTimeout(() => {
+            setAdded(false);
+        }, 2000);
     }, [product, quantity, addToCart]);
 
+    // دعم لو الـ API بيرجع مصفوفة صور جاهزة، لو مفيش بنعمل مصفوفة بالصورة الوحيدة المتاحة
     const images = product
-        ? [product.image || product.img, product.image || product.img, product.image || product.img]
+        ? product.images && Array.isArray(product.images) 
+            ? product.images 
+            : [product.image || product.img]
         : [];
 
     const totalPrice = product
@@ -130,7 +145,7 @@ export default function SingleProduct() {
                         <AnimatePresence mode="wait">
                             <motion.img
                                 key={activeImg}
-                                src={images[activeImg]}
+                                src={images[activeImg] || product.image || product.img}
                                 alt={product.title || product.name}
                                 initial={{ opacity: 0, scale: 1.04 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -160,26 +175,30 @@ export default function SingleProduct() {
                             </motion.button>
                         </div>
 
-                        <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full">
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
-                                {product.category}
-                            </span>
-                        </div>
+                        {product.category && (
+                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full">
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
+                                    {product.category}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Thumbnails */}
-                    <div className="flex gap-3">
-                        {images.map((img, i) => (
-                            <button
-                                key={i}
-                                onClick={() => setActiveImg(i)}
-                                className={`relative flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300
-                                    ${activeImg === i ? 'border-[#D4AF37] shadow-md' : 'border-transparent opacity-60 hover:opacity-90'}`}
-                            >
-                                <img src={img} alt="" className="w-full h-full object-cover" />
-                            </button>
-                        ))}
-                    </div>
+                    {/* Thumbnails - بتظهر بس لو فيه أكتر من صورة فعلياً */}
+                    {images.length > 1 && (
+                        <div className="flex gap-3">
+                            {images.map((img, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setActiveImg(i)}
+                                    className={`relative flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300
+                                        ${activeImg === i ? 'border-[#D4AF37] shadow-md' : 'border-transparent opacity-60 hover:opacity-90'}`}
+                                Dino>
+                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </motion.div>
 
                 {/* ── Product Info ── */}
@@ -194,18 +213,17 @@ export default function SingleProduct() {
                         <div className="flex gap-0.5">
                             {[...Array(5)].map((_, i) => (
                                 <FiStar key={i} size={13}
-                                    className={i < Math.round(product.rating || 4.9)
+                                    className={i < Math.round(product.rating?.rate || product.rating || 4.9)
                                         ? 'text-[#D4AF37] fill-[#D4AF37]'
                                         : 'text-gray-200 dark:text-gray-700 fill-gray-200 dark:fill-gray-700'}
                                 />
                             ))}
                         </div>
                         <span className="text-[11px] text-gray-400 dark:text-gray-500 font-bold">
-                            {product.rating || "4.9"} · 128 reviews
+                            {product.rating?.rate || product.rating || "4.9"} · 128 reviews
                         </span>
                     </div>
 
-                    {/* ✅ Title — مرة واحدة بس */}
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif italic font-bold text-gray-900 dark:text-white leading-tight mb-2 transition-colors duration-300">
                         {product.title || product.name}
                     </h1>
@@ -335,20 +353,20 @@ export default function SingleProduct() {
                         <motion.button
                             onClick={handleAddToCart}
                             whileTap={{ scale: 0.97 }}
-                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md
-                                ${added
+                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md ${
+                                added
                                     ? 'bg-green-500 text-white'
                                     : 'bg-gray-900 dark:bg-[#D4AF37] text-white hover:bg-[#D4AF37] dark:hover:bg-[#B8860B]'
-                                }`}
+                            }`}
                         >
                             <AnimatePresence mode="wait">
                                 {added ? (
-                                    <motion.span key="check" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                                    <motion.span key="check" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
                                         className="flex items-center gap-2">
                                         <FiCheck size={15} /> Added!
                                     </motion.span>
                                 ) : (
-                                    <motion.span key="add" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                                    <motion.span key="add" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
                                         className="flex items-center gap-2">
                                         <FiShoppingBag size={15} /> Add to Cart
                                     </motion.span>
@@ -381,7 +399,7 @@ export default function SingleProduct() {
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         {related.map((item, index) => (
                             <ProductCard
-                                key={item._id}
+                                key={item.id}
                                 product={item}
                                 index={index}
                             />
@@ -389,7 +407,6 @@ export default function SingleProduct() {
                     </div>
                 </section>
             )}
-
         </div>
     );
 }

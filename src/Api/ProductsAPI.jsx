@@ -1,17 +1,16 @@
-const BASE_URL = 'https://fakestoreapiserver.reactbd.org/api';
+const BASE_URL = 'https://fakestoreapi.com';
 
-// ✅ الـ API بيرجع { data: [...], totalProducts, totalPages, currentPage }
-// يعني المنتجات موجودة في response.data مش في response مباشرة
+// ✅ الـ API الجديد بيرجع الـ Array والـ Object مباشرة في الـ response 
+// يعني مفيش حاجة اسمها json.data خلاص يا بطل
 
 export const getProduct = async () => {
     const response = await fetch(`${BASE_URL}/products`);
     const json = await response.json();
-    return json.data; // ✅ بنرجع الـ array اللي جوه .data
+    return json; // 👈 رجعنا الـ json مباشرة (المصفوفة كاملة)
 };
 
 export const getProductById = async (id) => {
     const response = await fetch(`${BASE_URL}/products/${id}`);
     const json = await response.json();
-    // لو الـ endpoint رجع object مباشرة نرجعه، لو رجعه في .data نرجع .data
-    return json.data || json;
+    return json; // 👈 رجعنا الـ json مباشرة (الأوبجكت بتاع المنتج)
 };
