@@ -10,7 +10,7 @@ const ProductModal = ({ isOpen, onClose, product }) => {
     const [quantity, setQuantity] = useState(1);
 
     const { toggleWishlist, isWishlisted } = useWishlist();
-    const wished = isWishlisted(product?._id)
+    const wished = isWishlisted(product?.id)
 
     const navigate = useNavigate();
     const { addToCart } = useCart();
@@ -22,7 +22,7 @@ const ProductModal = ({ isOpen, onClose, product }) => {
 
     const handleViewDetails = useCallback(() => {
         onClose();
-        navigate(`/products/${product._id}`);
+        navigate(`/products/${product.id}`);
     }, [onClose, navigate, product]);
 
     const handleDecrement = useCallback(() => setQuantity(q => Math.max(1, q - 1)), []);

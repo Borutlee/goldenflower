@@ -25,8 +25,8 @@ const Products = () => {
 
                 // بنفصل المنتجات حسب الـ category
                 setAllProducts({
-                    women: products.filter(p => p.category === 'women').slice(0, 4),
-                    men: products.filter(p => p.category === 'men').slice(0, 4),
+                    women: products.filter(p => p.category === "women's clothing").slice(0, 4),
+                    men: products.filter(p => p.category === "men's clothing").slice(0, 4),
                 });
             } catch (error) {
                 console.error("Failed to fetch products:", error);
@@ -97,7 +97,7 @@ const Products = () => {
                                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full"
                             >
                                 {allProducts[category].map((product) => (
-                                    <ProductCard key={product._id} product={product} />
+                                    <ProductCard key={product.id} product={product} />
                                 ))}
                             </motion.div>
                         </AnimatePresence>

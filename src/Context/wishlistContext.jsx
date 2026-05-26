@@ -16,26 +16,26 @@ export function WishlistProvider({ children }) {
 
     const addToWishlist = (product) => {
         setWishlistItems(prev => {
-            const exist = prev.find(item => item._id === product._id);
+            const exist = prev.find(item => item.id === product.id);
             if (exist) return prev; // لو موجود مش بنضيفه تاني
             return [...prev, product];
         });
     };
 
     const removeFromWishlist = (id) => {
-        setWishlistItems(prev => prev.filter(item => item._id !== id));
+        setWishlistItems(prev => prev.filter(item => item.id !== id));
     };
 
     // toggle — لو موجود يشيله، لو مش موجود يضيفه
     const toggleWishlist = (product) => {
         setWishlistItems(prev => {
-            const exist = prev.find(item => item._id === product._id);
-            if (exist) return prev.filter(item => item._id !== product._id);
+            const exist = prev.find(item => item.id === product.id);
+            if (exist) return prev.filter(item => item.id !== product.id);
             return [...prev, product];
         });
     };
 
-    const isWishlisted = (id) => wishlistItems.some(item => item._id === id);
+    const isWishlisted = (id) => wishlistItems.some(item => item.id === id);
 
     return (
         <WishlistContext.Provider value={{ wishlistItems, addToWishlist, removeFromWishlist, toggleWishlist, isWishlisted }}>

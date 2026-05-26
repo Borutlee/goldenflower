@@ -34,7 +34,7 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
     const [ref, isInView] = useInView();
     const navigate = useNavigate();
     const { toggleWishlist, isWishlisted } = useWishlist();
-    const wished = isWishlisted(product?._id);
+    const wished = isWishlisted(product?.id);
 
     const handleOpen = useCallback(() => setOpen(true), []);
     const handleClose = useCallback(() => setOpen(false), []);

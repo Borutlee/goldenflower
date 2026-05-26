@@ -49,7 +49,7 @@ export default function SingleProduct() {
             .then(res => {
                 if (Array.isArray(res)) {
                     const filtered = res
-                        .filter(p => p.id !== id)
+                        .filter(p => p.id !== Number(id))
                         .slice(0, 4);
                     setRelated(filtered);
                 }
