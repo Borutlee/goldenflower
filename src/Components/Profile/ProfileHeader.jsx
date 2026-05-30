@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiUser, FiPhone, FiLogOut, FiSettings, FiLayout } from 'react-icons/fi';
+import { FiUser, FiPhone, FiLogOut, FiSettings, FiLayout, FiEye } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Context/AuthContext';
 import { useWishlist } from '../../Context/wishlistContext';
 import { logout } from '../../supabase/authService';
 
-export default function ProfileHeader({ onOpenSettings , ordersCount}) {
+// أضفنا البروب isMini هنا وقيمته الافتراضية false عشان ميبوظش صفحة البروفايل الأساسية
+export default function ProfileHeader({ onOpenSettings, ordersCount, isMini = false }) {
     const { user } = useAuth();
     const { wishlistItems } = useWishlist();
     const navigate = useNavigate();
@@ -32,7 +33,12 @@ export default function ProfileHeader({ onOpenSettings , ordersCount}) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-white dark:bg-gray-900 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-8 mb-8 transition-colors duration-300"
+            // التعديل هنا: لو هو ميني بنشيل الخلفية البيضاء والشادو عشان يندمج جوه الـ CTA الأسود تماماً
+            className={`${
+                isMini 
+                ? 'bg-transparent border-none p-0 mb-0' 
+                : 'bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-8 mb-8'
+            } rounded-[2rem] transition-colors duration-300 w-full`}
         >
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
 
@@ -52,7 +58,8 @@ export default function ProfileHeader({ onOpenSettings , ordersCount}) {
                 {/* Info */}
                 <div className="flex-1 w-full text-center sm:text-left min-w-0">
                     <div className="flex items-center gap-2 justify-center sm:justify-start">
-                        <h1 className="text-xl sm:text-2xl font-serif italic font-bold text-gray-900 dark:text-white truncate">{fullName}</h1>
+                        {/* التعديل هنا: لو في الـ CTA بنخلي النص أبيض صريح دائماً عشان يظهر على الخلفية السوداء */}
+                        <h1 className={`text-xl sm:text-2xl font-serif italic font-bold truncate ${isMini ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{fullName}</h1>
                         {isAdmin && (
                             <span className="flex-shrink-0 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20">
                                 Admin
@@ -79,31 +86,50 @@ export default function ProfileHeader({ onOpenSettings , ordersCount}) {
                             <FiLayout size={13} /> Admin Panel
                         </motion.button>
                     )}
-                    <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={onOpenSettings}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all"
-                    >
-                        <FiSettings size={13} /> Settings
-                    </motion.button>
+
+                    {/* زرار الـ View Profile: يظهر فقط في حالة الـ CTA (isMini) */}
+                    {isMini && (
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/userprofile')}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-zinc-700 text-gray-300 rounded-xl text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all"
+                        >
+                            <FiEye size={13} /> View Profile
+                        </motion.button>
+                    )}
+
+                    {/* زرار الـ Settings: يختفي لو الكومبوننت ميني (isMini) */}
+                    {!isMini && (
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={onOpenSettings}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all"
+                        >
+                            <FiSettings size={13} /> Settings
+                        </motion.button>
+                    )}
+
+                    {/* زرار تسجيل الخروج: ثابت وظاهر في الحالتين عادي وعنده بوردر متناسق مع السواد لو ميني */}
                     <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={handleLogout}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-red-200 dark:border-red-800 text-red-400 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                        className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-red-50 dark:hover:bg-red-900/20 transition-all ${
+                            isMini ? 'border-zinc-800 text-red-400/80 hover:text-red-400' : 'border-red-200 dark:border-red-800 text-red-400'
+                        }`}
                     >
                         <FiLogOut size={13} /> Logout
                     </motion.button>
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+            {/* Stats: هتفضل ظاهرة تحت في الحالتين، مع ضبط حدود البوردر العلوي ليناسب الدارك مود لو ميني */}
+            <div className={`grid grid-cols-2 gap-4 mt-8 pt-6 border-t ${isMini ? 'border-zinc-900' : 'border-gray-100 dark:border-gray-800'}`}>
                 <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{wishlistItems.length}</p>
+                    <p className={`text-2xl font-bold ${isMini ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{wishlistItems.length}</p>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold mt-1">Saved Items</p>
                 </div>
                 <div className="text-center">
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{ordersCount}</p>
+                    <p className={`text-2xl font-bold ${isMini ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{ordersCount}</p>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 font-bold mt-1">Orders</p>
                 </div>
             </div>
