@@ -1,4 +1,4 @@
-import localProducts from '../Data/products.json'; // 👈 استيراد ملف العطور الجديد بتاعك
+import localProducts from '../Data/Products.json'; // 👈 استيراد ملف العطور الجديد بتاعك
 
 // جلب كل عطور الـ Golden Flower
 export const getProduct = async () => {
