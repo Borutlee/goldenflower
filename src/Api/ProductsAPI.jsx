@@ -1,16 +1,12 @@
-const BASE_URL = 'https://fakestoreapi.com';
+import localProducts from '../data/products.json'; // 👈 استيراد ملف العطور الجديد بتاعك
 
-// ✅ الـ API الجديد بيرجع الـ Array والـ Object مباشرة في الـ response 
-// يعني مفيش حاجة اسمها json.data خلاص يا بطل
-
+// جلب كل عطور الـ Golden Flower
 export const getProduct = async () => {
-    const response = await fetch(`${BASE_URL}/products`);
-    const json = await response.json();
-    return json; // 👈 رجعنا الـ json مباشرة (المصفوفة كاملة)
+    return localProducts; // 👈 بيرجع الـ 20 صنف كاملين فوراً
 };
 
+// جلب عطر معين بالـ ID لصفحة SingleProduct
 export const getProductById = async (id) => {
-    const response = await fetch(`${BASE_URL}/products/${id}`);
-    const json = await response.json();
-    return json; // 👈 رجعنا الـ json مباشرة (الأوبجكت بتاع المنتج)
+    const product = localProducts.find(p => p.product_id === Number(id) || p.id === Number(id));
+    return product || localProducts[0]; // لو مالاقاهوش يرجع أول عطر كحماية
 };

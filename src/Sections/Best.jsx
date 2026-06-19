@@ -11,20 +11,26 @@ const BestSellers = () => {
         const fetchBestSellers = async () => {
             try {
                 const allProducts = await getProduct(); // بيجيب كل المنتجات
-                const top3 = [...allProducts]
-                    .sort((a, b) => b.rating - a.rating) // بيرتب من الأعلى للأقل
-                    .slice(0, 3); // بياخد أول 3
-                setBestSellers(top3);
+    
+                // تأكد إن البيانات جاية عبارة عن مصفوفة وصحيحة
+                if (allProducts && Array.isArray(allProducts)) {
+                    
+                    // ⚠️ الحل البديل والآمن: هناخد أول 3 منتجات مباشرة كـ Best Sellers
+                    // لأن الـ API الجديد لا يحتوي على حقل الـ rating
+                    const top3 = allProducts.slice(0, 3); 
+                    
+                    setBestSellers(top3);
+                }
             } catch (error) {
                 console.error("Failed to fetch best sellers:", error);
             } finally {
                 setLoading(false);
             }
         };
-
+    
         fetchBestSellers();
     }, []);
-
+    
     return (
         <section className="body-font bg-[#fafafa] dark:bg-[#0e0e0e] transition-colors duration-300 py-24 overflow-hidden">
             <div className="container px-5 mx-auto">

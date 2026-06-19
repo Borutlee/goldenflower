@@ -82,16 +82,24 @@ function Products() {
         })
     };
 
+    // 1️⃣ استخراج أسماء الكاتيجوريز كنصوص فقط لمنع الأيرور
     const alloptions = useMemo(() => {
-        const categorylist = products.map(item => item.category);
+        const categorylist = products
+            .map(item => typeof item.category === 'object' ? item.category?.name : item.category)
+            .filter(Boolean);
+        
         const uniqueCategories = [...new Set(categorylist)];
         return ["All", ...uniqueCategories];
     }, [products]);
 
+    // 2️⃣ فلترة المنتجات بمقارنة النصوص بشكل صحيح
     const sortedProducts = useMemo(() => {
         const filtered = selectedCategory === 'All'
             ? products
-            : products.filter(p => p.category === selectedCategory);
+            : products.filter(p => {
+                const catName = typeof p.category === 'object' ? p.category?.name : p.category;
+                return catName === selectedCategory;
+            });
 
         return [...filtered].sort((a, b) => {
             if (sort === "low-to-high") return a.price - b.price;
@@ -149,7 +157,8 @@ function Products() {
                                             : "bg-transparent text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                                         }`}
                                 >
-                                    {cat}
+                                    {/* ✅ هنا تم التأكد أن cat عبارة عن String صريح وليس أوبجكت */}
+                                    {cat} 
                                 </button>
                             );
                         })}

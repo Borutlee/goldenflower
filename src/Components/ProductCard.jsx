@@ -28,19 +28,25 @@ function useInView(options = {}) {
     return [ref, isInView];
 }
 
+// 🔁 صورة احتياطية فخمة لـ عطر لو حصل أي دروب في التحميل
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80";
+
 const ProductCard = memo(({ product, size, index = 0 }) => {
 
     const [isOpen, setOpen] = useState(false);
     const [ref, isInView] = useInView();
     const navigate = useNavigate();
     const { toggleWishlist, isWishlisted } = useWishlist();
-    const wished = isWishlisted(product?.id);
+
+    // 🌟 التعديل هنا: قراءة الـ product_id أو الـ id من الداتا الجديدة
+    const currentId = product?.product_id || product?.id;
+    const wished = isWishlisted(currentId);
 
     const handleOpen = useCallback(() => setOpen(true), []);
     const handleClose = useCallback(() => setOpen(false), []);
     const handleNavigate = useCallback(() => {
-        navigate(`/products/${product.id}`);
-    }, [navigate, product.id]);
+        navigate(`/products/${currentId}`);
+    }, [navigate, currentId]);
 
     return (
         <>
@@ -73,19 +79,27 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                             loading="lazy"
                             whileHover={{ scale: 1.1 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
-                            alt={product?.title || product?.name || "Product Image"}
+                            alt={product?.name || "Perfume Image"}
                             className="object-cover w-full h-full block hover:will-change-transform"
-                            src={product?.img || product?.image}
+                            // 🌟 قراءة حقل الـ image المباشر من مصفوفة العطور الجديدة
+                            src={product?.image || FALLBACK_IMAGE}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = FALLBACK_IMAGE;
+                            }}
                         />
 
                         {/* Rating Badge */}
                         <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
                             <FiStar className="text-[#D4AF37] fill-[#D4AF37]" size={10} />
                             <span className="text-[10px] font-bold text-gray-800 dark:text-white">
-                            {product.rating?.rate || '4.9'}
+                                {/* 🌟 التعديل السحري هنا: لو الـ rating عبارة عن object بنأخد الـ rate منه، لو رقم بنطبعه علطول */}
+                                {typeof product?.rating === 'object'
+                                    ? (product.rating.rate ?? '4.8')
+                                    : (product?.rating ?? '4.8')}
                             </span>
-                        </div> 
-
+                        </div>
+                        
                         {/* Eye Button */}
                         <motion.button
                             onClick={handleOpen}
@@ -125,12 +139,14 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
 
                         {/* Category */}
                         <h3 className="text-[#D4AF37] text-[9px] sm:text-[10px] tracking-[0.3em] font-bold mb-1.5 sm:mb-2 uppercase">
-                            {product.category || "Signature Scent"}
+                            {/* 🌟 قراءة الأقسام الجديدة (Men / Women / Unisex) */}
+                            {product.category || "Unisex"} Collection
                         </h3>
 
                         {/* Name */}
                         <h2 className="text-gray-900 dark:text-white text-base sm:text-xl font-serif mb-1.5 sm:mb-2 italic transition-colors duration-300">
-                            {product.title || product.name}
+                            {/* 🌟 التعديل لقراءة حقل الـ name المعتمد في الـ JSON الجديد بتاعنا */}
+                            {product.name}
                         </h2>
 
                         {/* Notes */}

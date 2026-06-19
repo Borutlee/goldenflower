@@ -5,8 +5,9 @@ import { getProduct } from '../Api/ProductsAPI';
 import { useNavigate } from 'react-router-dom';
 
 const Products = () => {
-    const [category, setCategory] = useState('women');
-    const [allProducts, setAllProducts] = useState({ women: [], men: [] });
+    // 🌟 رجعنا لـ Women و Men بس
+    const [category, setCategory] = useState('Women');
+    const [allProducts, setAllProducts] = useState({ Women: [], Men: [] });
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -23,10 +24,10 @@ const Products = () => {
             try {
                 const products = await getProduct();
 
-                // بنفصل المنتجات حسب الـ category
+                // 🌟 الفلترة على الأقسام الأساسية فقط
                 setAllProducts({
-                    women: products.filter(p => p.category === "women's clothing").slice(0, 4),
-                    men: products.filter(p => p.category === "men's clothing").slice(0, 4),
+                    Women: products.filter(p => p.category === "Women").slice(0, 4),
+                    Men: products.filter(p => p.category === "Men").slice(0, 4),
                 });
             } catch (error) {
                 console.error("Failed to fetch products:", error);
@@ -38,7 +39,8 @@ const Products = () => {
         fetchProducts();
     }, []);
 
-    const tabs = ['women', 'men'];
+    // 🌟 الـ Tabs المتاحة حالياً
+    const tabs = ['Women', 'Men'];
 
     return (
         <section className="py-24 bg-white dark:bg-[#121212] transition-colors duration-300 overflow-hidden">
@@ -96,8 +98,12 @@ const Products = () => {
                                 exit={{ opacity: 0, transition: { duration: 0.2 } }}
                                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full"
                             >
-                                {allProducts[category].map((product) => (
-                                    <ProductCard key={product.id} product={product} />
+                                {allProducts[category]?.map((product, index) => (
+                                    <ProductCard 
+                                        key={product.product_id || product.id} 
+                                        product={product} 
+                                        index={index}
+                                    />
                                 ))}
                             </motion.div>
                         </AnimatePresence>

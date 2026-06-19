@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'; // 1. ضيفنا useRef
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,7 +18,7 @@ const TABS = ['Description', 'Notes', 'Reviews'];
 export default function SingleProduct() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const timeoutRef = useRef(null); // ريف لحفظ التايمر منعاً للـ Memory Leak
+    const timeoutRef = useRef(null);
 
     const [product, setProduct] = useState(null);
     const [related, setRelated] = useState([]);
@@ -33,12 +33,13 @@ export default function SingleProduct() {
     const [activeTab, setActiveTab] = useState('Description');
     const [activeImg, setActiveImg] = useState(0);
     const [added, setAdded] = useState(false);
+    const [shared, setShared] = useState(false);
 
     const { addToCart } = useCart();
 
     useEffect(() => {
         setLoading(true);
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         getProductById(id)
             .then(res => {
@@ -59,7 +60,6 @@ export default function SingleProduct() {
                 setLoading(false);
             });
 
-        // Cleanup للـ تايمر لو المستخدم خرج من الصفحة فجأة
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
@@ -68,29 +68,53 @@ export default function SingleProduct() {
     const handleDecrement = useCallback(() => setQuantity(q => Math.max(1, q - 1)), []);
     const handleIncrement = useCallback(() => setQuantity(q => q + 1), []);
     const handleWish = useCallback(() => toggleWishlist(product), [product, toggleWishlist]);
-    
+
     const handleAddToCart = useCallback(() => {
-        addToCart(product, quantity);
+        if (!product) return;
+        addToCart({ ...product, selectedSize }, quantity);
         setAdded(true);
-        
-        // تنظيف التايمر القديم لو ضغط كذا مرة ورا بعض
+
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        
+
         timeoutRef.current = setTimeout(() => {
             setAdded(false);
         }, 2000);
-    }, [product, quantity, addToCart]);
+    }, [product, quantity, selectedSize, addToCart]);
 
-    // دعم لو الـ API بيرجع مصفوفة صور جاهزة، لو مفيش بنعمل مصفوفة بالصورة الوحيدة المتاحة
+    const handleShare = useCallback(() => {
+        const shareData = {
+            title: product?.title || product?.name || 'Golden Flower Collection',
+            text: product?.description || 'Check out this amazing fragrance!',
+            url: window.location.href,
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            setShared(true);
+            setTimeout(() => setShared(false), 2000);
+        }
+    }, [product]);
+
+    // 🌟 استخراج روابط الصور بشكل آمن ودفاعي
+    const getProductImageSrc = (imgField) => {
+        if (!imgField) return '';
+        // لو الحقل عبارة عن أوبجكت (زي الكاتيجوري)، اسحب منه رابط الصورة جواه
+        if (typeof imgField === 'object') {
+            return imgField.image || imgField.url || '';
+        }
+        return imgField;
+    };
+
     const images = product
-        ? product.images && Array.isArray(product.images) 
-            ? product.images 
-            : [product.image || product.img]
+        ? product.images && Array.isArray(product.images) && product.images.length > 0
+            ? product.images.map(img => getProductImageSrc(img))
+            : [getProductImageSrc(product.image) || getProductImageSrc(product.img) || getProductImageSrc(product?.category?.image)]
         : [];
 
-    const totalPrice = product
-        ? (parseFloat(product.price) * quantity).toFixed(2)
-        : '0.00';
+    const priceAsNumber = product ? parseFloat(product.price) : 0;
+    const totalPrice = (!isNaN(priceAsNumber) ? priceAsNumber * quantity : 0).toFixed(2);
 
     // ━━━━ Loading Skeleton ━━━━
     if (loading) return (
@@ -145,7 +169,7 @@ export default function SingleProduct() {
                         <AnimatePresence mode="wait">
                             <motion.img
                                 key={activeImg}
-                                src={images[activeImg] || product.image || product.img}
+                                src={images[activeImg] || 'https://via.placeholder.com/600'}
                                 alt={product.title || product.name}
                                 initial={{ opacity: 0, scale: 1.04 }}
                                 animate={{ opacity: 1, scale: 1 }}
@@ -155,7 +179,7 @@ export default function SingleProduct() {
                             />
                         </AnimatePresence>
 
-                        <div className="absolute top-4 right-4 flex flex-col gap-2">
+                        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                             <motion.button
                                 whileTap={{ scale: 0.9 }}
                                 onClick={handleWish}
@@ -167,25 +191,27 @@ export default function SingleProduct() {
                             >
                                 <FiHeart size={16} className={wished ? 'fill-red-500' : ''} />
                             </motion.button>
+
                             <motion.button
                                 whileTap={{ scale: 0.9 }}
+                                onClick={handleShare}
                                 className="p-2.5 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md border border-white/50 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-white shadow-sm transition-all duration-300"
                             >
-                                <FiShare2 size={16} />
+                                {shared ? <FiCheck size={16} className="text-green-500" /> : <FiShare2 size={16} />}
                             </motion.button>
                         </div>
 
                         {product.category && (
-                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full">
+                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full z-10">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
-                                    {product.category}
+                                    {typeof product.category === 'object' ? product.category.name : product.category}
                                 </span>
                             </div>
                         )}
                     </div>
 
-                    {/* Thumbnails - بتظهر بس لو فيه أكتر من صورة فعلياً */}
-                    {images.length > 1 && (
+                    {/* Thumbnails */}
+                    {images.length > 1 && images[0] !== '' && (
                         <div className="flex gap-3">
                             {images.map((img, i) => (
                                 <button
@@ -193,7 +219,7 @@ export default function SingleProduct() {
                                     onClick={() => setActiveImg(i)}
                                     className={`relative flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300
                                         ${activeImg === i ? 'border-[#D4AF37] shadow-md' : 'border-transparent opacity-60 hover:opacity-90'}`}
-                                Dino>
+                                Amina                                >
                                     <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
                             ))}
@@ -238,7 +264,7 @@ export default function SingleProduct() {
                                     ? <GiFlowerPot className="text-[#D4AF37]" size={11} />
                                     : <GiWaterDrop className="text-[#D4AF37]" size={11} />
                                 }
-                                {note}
+                                {typeof note === 'object' ? note.name : note}
                             </span>
                         ))}
                     </div>
@@ -353,11 +379,10 @@ export default function SingleProduct() {
                         <motion.button
                             onClick={handleAddToCart}
                             whileTap={{ scale: 0.97 }}
-                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md ${
-                                added
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-gray-900 dark:bg-[#D4AF37] text-white hover:bg-[#D4AF37] dark:hover:bg-[#B8860B]'
-                            }`}
+                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md ${added
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-900 dark:bg-[#D4AF37] text-white hover:bg-[#D4AF37] dark:hover:bg-[#B8860B]'
+                                }`}
                         >
                             <AnimatePresence mode="wait">
                                 {added ? (
