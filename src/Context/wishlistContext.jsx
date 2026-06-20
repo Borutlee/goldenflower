@@ -87,8 +87,8 @@ export function WishlistProvider({ children }) {
                 return;
             }
 
-            // 🔁 الـ ID اللي جاي من الفرونت إند (ProductCard) هو legacy_id بسيط (1, 2, 3...)
-            const legacyId = product.id || product.product_id;
+            // 🔁 نفس المنطق: لو المنتج جاي من صفحة الـ Wishlist نفسها، legacy_id هو الصحيح
+            const legacyId = product.legacy_id ?? product.id ?? product.product_id;
 
             // 🔁 لازم نترجمه للـ UUID الحقيقي قبل أي insert في جدول wishlist
             const productUUID = await getProductUUID(legacyId);
@@ -97,8 +97,9 @@ export function WishlistProvider({ children }) {
                 return;
             }
 
-            // تحديث متفائل سريع في الـ UI عشان اليوزر ما يحسش ببطء
-            setWishlistItems(prev => [...prev, { ...product, product_uuid: productUUID }]);
+            // 🔁 تحديث متفائل سريع في الـ UI عشان اليوزر ما يحسش ببطء
+            // مهم: بنضيف legacy_id صريح هنا عشان يتطابق مع شكل الداتا الراجعة من fetchWishlist
+            setWishlistItems(prev => [...prev, { ...product, legacy_id: legacyId, product_uuid: productUUID }]);
 
             const { error } = await supabase
                 .from('wishlist')
@@ -123,8 +124,10 @@ export function WishlistProvider({ children }) {
             const productUUID = await getProductUUID(legacyId);
             if (!productUUID) return;
 
-            // تحديث سريع متفائل في الـ UI
-            setWishlistItems(prev => prev.filter(item => (item.id !== legacyId && item.product_id !== legacyId)));
+            // 🔁 تحديث سريع متفائل في الـ UI
+            // مهم: item.id هنا هو UUID بتاع المنتج (من جدول products)، مش legacy_id
+            // فلازم نقارن بـ item.legacy_id بدل item.id / item.product_id
+            setWishlistItems(prev => prev.filter(item => item.legacy_id !== legacyId));
 
             const { error } = await supabase
                 .from('wishlist')
@@ -142,9 +145,14 @@ export function WishlistProvider({ children }) {
     };
 
     // 4️⃣ الـ Toggle الذكي
+    // 🔁 مهم: لازم نفرّق بين حالتين:
+    //   - المنتج جاي من ProductCard في صفحة المنتجات العادية → product.id هنا رقم بسيط (legacy_id الحقيقي)
+    //   - المنتج جاي من صفحة الـ Wishlist نفسها (بعد fetchWishlist) → product.id هنا UUID،
+    //     والرقم البسيط الصحيح موجود في product.legacy_id
+    // لو معتمدناش على legacy_id الأول هنا، الحذف من صفحة Wishlist (أو من جهاز تاني) هيفشل بصمت
     const toggleWishlist = async (product) => {
-        const legacyId = product.id || product.product_id;
-        const exists = wishlistItems.some(item => (item.id === legacyId || item.product_id === legacyId));
+        const legacyId = product.legacy_id ?? product.id ?? product.product_id;
+        const exists = wishlistItems.some(item => item.legacy_id === legacyId);
 
         if (exists) {
             await removeFromWishlist(legacyId);
@@ -154,7 +162,7 @@ export function WishlistProvider({ children }) {
     };
 
     const isWishlisted = (id) => {
-        return wishlistItems.some(item => (item.id === id || item.product_id === id));
+        return wishlistItems.some(item => item.legacy_id === id);
     };
 
     return (

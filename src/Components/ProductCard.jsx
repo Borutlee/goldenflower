@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiStar, FiArrowRight, FiEye, FiHeart } from "react-icons/fi";
-import { GiFlowerPot, GiWaterDrop } from "react-icons/gi";
+import { FiStar, FiArrowRight, FiHeart } from "react-icons/fi";
 import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductModal from './ProductModel';
@@ -32,18 +31,20 @@ function useInView(options = {}) {
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80";
 
 const ProductCard = memo(({ product, size, index = 0 }) => {
-
     const [isOpen, setOpen] = useState(false);
     const [ref, isInView] = useInView();
     const navigate = useNavigate();
     const { toggleWishlist, isWishlisted } = useWishlist();
 
-    // 🌟 التعديل هنا: قراءة الـ product_id أو الـ id من الداتا الجديدة
+    // 🌟 قراءة الـ product_id أو الـ id من الداتا الجديدة
     const currentId = product?.product_id || product?.id;
     const wished = isWishlisted(currentId);
 
+    // دالتين فتح وقفل المودال
     const handleOpen = useCallback(() => setOpen(true), []);
     const handleClose = useCallback(() => setOpen(false), []);
+    
+    // دالة الانتقال لصفحة السنجل برودكت (هنخليها لزرار View Details بس)
     const handleNavigate = useCallback(() => {
         navigate(`/products/${currentId}`);
     }, [navigate, currentId]);
@@ -73,15 +74,17 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
             >
                 <div className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-3 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2">
 
-                    {/* Image Container */}
-                    <div className="relative h-64 sm:h-64 lg:h-72 rounded-[1.2rem] sm:rounded-[2rem] overflow-hidden bg-gray-50 dark:bg-zinc-800 mb-4 sm:mb-6 isolation-isolate">
+                    {/* Image Container - الضغط هنا هيفتح المودال الحالي */}
+                    <div 
+                        onClick={handleOpen}
+                        className="relative h-64 sm:h-64 lg:h-72 rounded-[1.2rem] sm:rounded-[2rem] overflow-hidden bg-gray-50 dark:bg-zinc-800 mb-4 sm:mb-6 isolation-isolate cursor-pointer"
+                    >
                         <motion.img
                             loading="lazy"
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.05 }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                             alt={product?.name || "Perfume Image"}
                             className="object-cover w-full h-full block hover:will-change-transform"
-                            // 🌟 قراءة حقل الـ image المباشر من مصفوفة العطور الجديدة
                             src={product?.image || FALLBACK_IMAGE}
                             onError={(e) => {
                                 e.target.onerror = null;
@@ -93,35 +96,21 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                         <div className="absolute top-3 right-3 bg-white/90 dark:bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm z-10">
                             <FiStar className="text-[#D4AF37] fill-[#D4AF37]" size={10} />
                             <span className="text-[10px] font-bold text-gray-800 dark:text-white">
-                                {/* 🌟 التعديل السحري هنا: لو الـ rating عبارة عن object بنأخد الـ rate منه، لو رقم بنطبعه علطول */}
                                 {typeof product?.rating === 'object'
                                     ? (product.rating.rate ?? '4.8')
                                     : (product?.rating ?? '4.8')}
                             </span>
                         </div>
-                        
-                        {/* Eye Button */}
-                        <motion.button
-                            onClick={handleOpen}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="absolute top-12 right-3 bg-white/90 dark:bg-black/60 backdrop-blur-md p-1.5 rounded-full shadow-sm z-10 group/eye transition-colors duration-300 hover:bg-[#D4AF37]"
-                        >
-                            <FiEye
-                                size={11}
-                                className="text-gray-500 dark:text-gray-300 group-hover/eye:text-white transition-colors duration-300"
-                            />
-                        </motion.button>
 
                         {/* Wishlist Button */}
                         <motion.button
                             onClick={(e) => {
-                                e.stopPropagation();
+                                e.stopPropagation(); // يمنع فتح المودال عند الضغط على القلب
                                 toggleWishlist(product);
                             }}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.95 }}
-                            className={`absolute top-24 right-3 backdrop-blur-md p-1.5 rounded-full shadow-sm z-10 transition-all duration-300
+                            className={`absolute top-12 right-3 backdrop-blur-md p-1.5 rounded-full shadow-sm z-10 transition-all duration-300
                                 ${wished
                                     ? 'bg-red-50 dark:bg-red-900/20 text-red-500'
                                     : 'bg-white/90 dark:bg-black/60 text-gray-500 dark:text-gray-300 hover:bg-[#D4AF37] hover:text-white'
@@ -139,38 +128,20 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
 
                         {/* Category */}
                         <h3 className="text-[#D4AF37] text-[9px] sm:text-[10px] tracking-[0.3em] font-bold mb-1.5 sm:mb-2 uppercase">
-                            {/* 🌟 قراءة الأقسام الجديدة (Men / Women / Unisex) */}
                             {product.category || "Unisex"} Collection
                         </h3>
 
                         {/* Name */}
                         <h2 className="text-gray-900 dark:text-white text-base sm:text-xl font-serif mb-1.5 sm:mb-2 italic transition-colors duration-300">
-                            {/* 🌟 التعديل لقراءة حقل الـ name المعتمد في الـ JSON الجديد بتاعنا */}
                             {product.name}
                         </h2>
-
-                        {/* Notes */}
-                        <div className="flex justify-center gap-3 sm:gap-4 mb-3 sm:mb-4 opacity-70">
-                            <div className="flex items-center gap-1">
-                                <GiFlowerPot className="text-[#D4AF37]" size={12} />
-                                <span className="text-[11px] sm:text-[13px] uppercase tracking-widest text-gray-600 dark:text-gray-400 transition-colors duration-300">
-                                    {product.notes?.[0] ?? "Floral"}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <GiWaterDrop className="text-[#D4AF37]" size={12} />
-                                <span className="text-[11px] sm:text-[13px] uppercase tracking-widest text-gray-600 dark:text-gray-400 transition-colors duration-300">
-                                    {product.notes?.[1] ?? "Oud"}
-                                </span>
-                            </div>
-                        </div>
 
                         {/* Price */}
                         <p className="text-gray-900 dark:text-[#D4AF37] font-bold text-base sm:text-lg mb-3 sm:mb-5 transition-colors duration-300">
                             ${product.price}
                         </p>
 
-                        {/* Action Button */}
+                        {/* Action Button - الزرار ده هيفضل ينقل لصفحة السنجل برودكت الأساسية */}
                         <motion.button
                             whileHover="hover"
                             whileTap={{ scale: 0.98 }}
@@ -183,7 +154,7 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                                 transition={{ duration: 0.5, ease: [0.19, 1, 0.22, 1] }}
                                 className="absolute inset-0 bg-[#D4AF37] z-0"
                             />
-                            <div className="relative z-10 flex items-center justify-center gap-2 group-hover:text-black transition-colors duration-500">
+                            <div className="relative z-10 flex items-center justify-center gap-2 group-hover:text-black transition-colors duration-500 dark:group-hover:text-[#836C21]">
                                 View Details
                                 <FiArrowRight
                                     className="opacity-70 group-hover:translate-x-1 transition-transform duration-500"
