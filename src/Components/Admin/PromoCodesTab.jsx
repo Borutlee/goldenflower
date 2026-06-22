@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../supabase/supabaseClient';
 import { toast } from 'react-toastify';
-import { FiPlus, FiX, FiSave, FiToggleLeft, FiToggleRight, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiX, FiSave, FiToggleLeft, FiToggleRight, FiTrash2, FiClock, FiUsers } from 'react-icons/fi';
 
 const Field = ({ label, ...props }) => (
     <div className="flex flex-col gap-1.5">
@@ -20,11 +20,21 @@ const Select = ({ label, children, ...props }) => (
     </div>
 );
 
+// 🔁 شكل افتراضي للفورم، بالحقول الجديدة بجانب القديمة
+const EMPTY_FORM = {
+    code: '',
+    discount: '',
+    type: 'percentage',
+    usage_limit_per_user: 1,   // 👈 جديد: كل يوزر يستخدم الكود كام مرة
+    valid_from: '',            // 👈 جديد: تاريخ بداية الصلاحية
+    valid_until: '',           // 👈 جديد: تاريخ نهاية الصلاحية
+};
+
 export default function PromoCodesTab() {
     const [promoCodes, setPromoCodes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ code: '', discount: '', type: 'percentage' });
+    const [form, setForm] = useState(EMPTY_FORM);
 
     useEffect(() => { fetchPromoCodes(); }, []);
 
@@ -37,11 +47,22 @@ export default function PromoCodesTab() {
 
     const handleAdd = async () => {
         if (!form.code || !form.discount) { toast.error('Code and discount are required.'); return; }
-        const { error } = await supabase.from('promo_codes').insert({ ...form, discount: parseFloat(form.discount) });
+
+        // 🔁 تجهيز الداتا قبل الإرسال: تحويل الأرقام لأرقام فعلية، والتواريخ الفاضية لـ null
+        const payload = {
+            code: form.code,
+            discount: parseFloat(form.discount),
+            type: form.type,
+            usage_limit_per_user: parseInt(form.usage_limit_per_user) || 1,
+            valid_from: form.valid_from ? new Date(form.valid_from).toISOString() : new Date().toISOString(),
+            valid_until: form.valid_until ? new Date(form.valid_until).toISOString() : null,
+        };
+
+        const { error } = await supabase.from('promo_codes').insert(payload);
         if (error) { toast.error(error.message); return; }
         toast.success('Promo code added!');
         setShowForm(false);
-        setForm({ code: '', discount: '', type: 'percentage' });
+        setForm(EMPTY_FORM);
         fetchPromoCodes();
     };
 
@@ -58,6 +79,12 @@ export default function PromoCodesTab() {
         if (error) { toast.error(error.message); return; }
         toast.success('Promo code deleted!');
         fetchPromoCodes();
+    };
+
+    // 🔁 دالة بسيطة لعرض التاريخ بشكل مقروء، أو "No expiry" لو مفيش تاريخ نهاية
+    const formatDate = (dateStr) => {
+        if (!dateStr) return 'No expiry';
+        return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
     return (
@@ -83,7 +110,9 @@ export default function PromoCodesTab() {
                             <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">New Promo Code</h3>
                             <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600 transition-colors"><FiX size={16} /></button>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                        {/* الصف الأول: الكود + الخصم + النوع (زي ما كانت) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                             <Field label="Code *" value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="SUMMER20" />
                             <Field label="Discount *" type="number" value={form.discount} onChange={e => setForm({ ...form, discount: e.target.value })} placeholder="20" />
                             <Select label="Type" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
@@ -91,6 +120,31 @@ export default function PromoCodesTab() {
                                 <option value="fixed">Fixed ($)</option>
                             </Select>
                         </div>
+
+                        {/* 🔁 الصف الجديد: عدد مرات الاستخدام لكل يوزر + تواريخ الصلاحية */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <Field
+                                label="Uses Per User"
+                                type="number"
+                                min="1"
+                                value={form.usage_limit_per_user}
+                                onChange={e => setForm({ ...form, usage_limit_per_user: e.target.value })}
+                                placeholder="1"
+                            />
+                            <Field
+                                label="Valid From"
+                                type="date"
+                                value={form.valid_from}
+                                onChange={e => setForm({ ...form, valid_from: e.target.value })}
+                            />
+                            <Field
+                                label="Valid Until (optional)"
+                                type="date"
+                                value={form.valid_until}
+                                onChange={e => setForm({ ...form, valid_until: e.target.value })}
+                            />
+                        </div>
+
                         <div className="flex gap-3 mt-5">
                             <button onClick={() => setShowForm(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider hover:bg-gray-50 dark:hover:bg-white/5 transition-all">
                                 Cancel
@@ -116,6 +170,15 @@ export default function PromoCodesTab() {
                                 <p className="text-xs text-gray-400 mt-0.5">
                                     {promo.type === 'percentage' ? `${promo.discount}% off` : `$${promo.discount} off`}
                                 </p>
+                                {/* 🔁 معلومات جديدة: عدد المرات + تاريخ الانتهاء */}
+                                <div className="flex items-center gap-3 mt-1.5 text-[10px] text-gray-400">
+                                    <span className="flex items-center gap-1">
+                                        <FiUsers size={10} /> {promo.usage_limit_per_user || 1}x per user
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <FiClock size={10} /> {formatDate(promo.valid_until)}
+                                    </span>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-lg ${promo.active ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-gray-100 dark:bg-white/5 text-gray-400'}`}>
