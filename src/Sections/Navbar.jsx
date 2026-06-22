@@ -1,5 +1,4 @@
 import { FaUser, FaBars, FaTimes } from 'react-icons/fa';
-import { IoFlowerOutline } from "react-icons/io5";
 import { FaCartShopping } from "react-icons/fa6";
 import { MdDarkMode, MdOutlineLightMode } from "react-icons/md";
 import { FiUser, FiLogOut, FiChevronDown } from 'react-icons/fi';
@@ -10,6 +9,7 @@ import { useCart } from '../Context/CartContext';
 import { useTheme } from '../Context/ThemeContext';
 import { useAuth } from '../Context/AuthContext';
 import { logout } from '../supabase/authService';
+import  logo  from '../imgs/heropic-2.webp'; // 👈 الـ لوجو الممتع بتاعك
 
 const Header = () => {
   const { isDark, toggleTheme } = useTheme();
@@ -65,13 +65,21 @@ const Header = () => {
         shadow-lg
         transition-colors duration-300
       ">
-        {/* Logo */}
+        {/* Logo Section */}
         <div className="flex-shrink-0">
-          <a href="/" className="flex items-center group gap-1 sm:gap-2 no-underline">
-            <IoFlowerOutline className="text-2xl sm:text-4xl text-[#D4AF37] group-hover:text-[#B8860B] group-hover:rotate-45 transition-all duration-500 transform" />
-            <h1 className="text-lg sm:text-2xl font-black tracking-tighter">
+          <a href="/" className="flex items-center group gap-2 sm:gap-3 no-underline">
+            {/* 🌟 صورة اللوجو هنا بدل الوردة القديمة مع ضبط المقاس والـ Hover */}
+            <div className="w-12 h-12 sm:w-16 sm:h-16 overflow-hidden transition-all duration-500 transform group-hover:scale-105 ">
+              <img 
+                src={logo} 
+                alt="Golden Flower Logo" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            
+            <h1 className="text-lg sm:text-2xl font-black tracking-tighter flex items-center">
               <span className="text-[#D4AF37] group-hover:text-[#B8860B] transition-all duration-500">GOLDEN</span>
-              <span className="text-gray-800 dark:text-gray-300 inline transition-colors duration-300"> FLOWER</span>
+              <span className="text-gray-800 dark:text-gray-300 inline transition-colors duration-300">&nbsp;FLOWER</span>
             </h1>
           </a>
         </div>
@@ -111,7 +119,6 @@ const Header = () => {
           {/* ── User Section ── */}
           <div className="hidden md:block relative" ref={dropdownRef}>
             {user ? (
-              // ← لو logged in — بيظهر Avatar + Dropdown
               <>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -140,13 +147,11 @@ const Header = () => {
                       transition={{ duration: 0.15 }}
                       className="absolute right-0 top-12 w-48 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden z-50"
                     >
-                      {/* User Info */}
                       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
                         <p className="text-xs font-bold text-gray-900 dark:text-white truncate">{userName}</p>
                         <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
                       </div>
 
-                      {/* Profile Link */}
                       <Link
                         to="/userProfile"
                         onClick={() => setDropdownOpen(false)}
@@ -156,7 +161,6 @@ const Header = () => {
                         Profile
                       </Link>
 
-                      {/* Logout */}
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -169,7 +173,6 @@ const Header = () => {
                 </AnimatePresence>
               </>
             ) : (
-              // ← لو مش logged in — بيظهر أيقونة اليوزر
               <Link to="/Auth" className="relative group p-1">
                 <FaUser className="text-xl text-gray-700 dark:text-gray-300 hover:text-[#B8860B] transition-all duration-300" />
               </Link>
@@ -222,14 +225,12 @@ const Header = () => {
             <hr className="my-2 border-gray-100 dark:border-gray-700" />
 
             {user ? (
-              // ← لو logged in في الموبايل
               <>
                 <Link
                   to="/userProfile"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 w-full p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 transition-colors hover:border-[#D4AF37]"
                 >
-                  {/* Avatar */}
                   <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#D4AF37]/40 bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                     {userAvatar ? (
                       <img src={userAvatar} alt="avatar" className="w-full h-full object-cover" />
@@ -237,14 +238,12 @@ const Header = () => {
                       <FiUser size={14} className="text-gray-500" />
                     )}
                   </div>
-                  {/* Name */}
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-gray-900 dark:text-white truncate">{userName}</span>
                     <span className="text-[10px] text-gray-400 uppercase tracking-wider">View Profile</span>
                   </div>
                 </Link>
 
-                {/* Logout */}
                 <button
                   onClick={handleLogout}
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-red-200 dark:border-red-800 text-red-500 font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -254,7 +253,6 @@ const Header = () => {
                 </button>
               </>
             ) : (
-              // ← لو مش logged in في الموبايل
               <>
                 <Link to="/Auth" onClick={() => setIsOpen(false)} className="w-full py-3 text-center border border-[#D4AF37] text-[#D4AF37] rounded-xl font-bold">
                   Log In

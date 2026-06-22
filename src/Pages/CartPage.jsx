@@ -7,7 +7,7 @@ export default function Cart() {
     const navigate = useNavigate();
     const { cartItems, removeFromCart, clearCart, updatequantity } = useCart();
 
-    // ━━━━ Functions ━━━━
+    // ━━━━ Functions (رجعت لأصلها تماماً بدون تعديل) ━━━━
     const handleRemove = (id) => removeFromCart(id);
     const handleIncrement = (id, quantity) => updatequantity(id, quantity + 1);
     const handleDecrement = (id, currentQty) => {
@@ -23,7 +23,7 @@ export default function Cart() {
     // ━━━━ Empty State ━━━━
     if (cartItems.length === 0) return (
         <div className="min-h-screen bg-white dark:bg-[#121212] flex flex-col items-center justify-center gap-6 px-4 transition-colors duration-300">
-            <motion.div 
+            <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="w-24 h-24 rounded-full bg-gray-50 dark:bg-[#1A1A1A] flex items-center justify-center border border-gray-100 dark:border-gray-800"
@@ -78,7 +78,8 @@ export default function Cart() {
                         <AnimatePresence mode='popLayout'>
                             {cartItems.map((item, index) => (
                                 <motion.div
-                                    key={item.product._id}
+                                    // 🌟 التعديل الوحيد هنا: استخدمنا الـ index مع الـ _id عشان نضمن إن الـ key مش undefined ومن غير ما نلعب في الداتا
+                                    key={item.product?._id || `item-${index}`}
                                     layout
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}

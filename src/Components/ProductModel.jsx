@@ -1,16 +1,18 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiX, FiShoppingBag, FiHeart, FiMinus, FiPlus, FiArrowRight } from 'react-icons/fi';
+import { FiX, FiShoppingBag, FiHeart, FiMinus, FiPlus, FiArrowRight, FiCheck } from 'react-icons/fi';
 import { useCart } from '../Context/CartContext';
 import { useWishlist } from '../Context/wishlistContext';
 
 const ProductModal = ({ isOpen, onClose, product }) => {
     const [size, setSize] = useState('100ml');
     const [quantity, setQuantity] = useState(1);
+    const [added, setAdded] = useState(false); // 🌟 حالة الأنيميشن للزرار
+    const timeoutRef = useRef(null);
 
     const { toggleWishlist, isWishlisted } = useWishlist();
-    const wished = isWishlisted(product?.id)
+    const wished = isWishlisted(product?.id);
 
     const navigate = useNavigate();
     const { addToCart } = useCart();
@@ -28,10 +30,25 @@ const ProductModal = ({ isOpen, onClose, product }) => {
     const handleDecrement = useCallback(() => setQuantity(q => Math.max(1, q - 1)), []);
     const handleIncrement = useCallback(() => setQuantity(q => q + 1), []);
     const handleWish = useCallback(() => toggleWishlist(product), [product, toggleWishlist]);
+    
+    // 🌟 الدالة المعدلة: إضافة بدون قفل المودال
     const handleAddToCart = useCallback(() => {
+        if (!product) return;
         addToCart(product, quantity);
-        onClose();
-    }, [addToCart, product, quantity, onClose]);
+        setAdded(true);
+
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+        timeoutRef.current = setTimeout(() => {
+            setAdded(false);
+        }, 2000);
+    }, [addToCart, product, quantity]);
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, []);
 
     if (!product) return null;
 
@@ -142,14 +159,38 @@ const ProductModal = ({ isOpen, onClose, product }) => {
                                         <p className="text-xl font-extrabold text-gray-900 dark:text-white transition-colors duration-300">${totalPrice}</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        {/* Add to Cart */}
+                                        {/* Add to Cart Button المطور */}
                                         <motion.button
                                             whileTap={{ scale: 0.96 }}
                                             onClick={handleAddToCart}
-                                            className="flex items-center gap-1.5 bg-gray-900 dark:bg-[#D4AF37] text-white dark:text-gray-900 px-4 py-2.5 rounded-full font-bold uppercase text-[10px] tracking-[0.15em] hover:bg-[#D4AF37] dark:hover:bg-[#B8860B] active:scale-95 transition-all duration-300"
+                                            className={`flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full font-bold uppercase text-[10px] tracking-[0.15em] transition-all duration-300 min-w-[100px] shadow-sm ${added
+                                                ? 'bg-green-500 text-white hover:bg-green-600'
+                                                : 'bg-gray-900 dark:bg-[#D4AF37] text-white dark:text-gray-900 hover:bg-[#D4AF37] dark:hover:bg-[#B8860B]'
+                                            }`}
                                         >
-                                            <FiShoppingBag size={13} />
-                                            Add
+                                            <AnimatePresence mode="wait">
+                                                {added ? (
+                                                    <motion.span 
+                                                        key="check" 
+                                                        initial={{ opacity: 0, y: 4 }} 
+                                                        animate={{ opacity: 1, y: 0 }} 
+                                                        exit={{ opacity: 0, y: -4 }}
+                                                        className="flex items-center gap-1.5"
+                                                    >
+                                                        <FiCheck size={13} /> Added!
+                                                    </motion.span>
+                                                ) : (
+                                                    <motion.span 
+                                                        key="add" 
+                                                        initial={{ opacity: 0, y: 4 }} 
+                                                        animate={{ opacity: 1, y: 0 }} 
+                                                        exit={{ opacity: 0, y: -4 }}
+                                                        className="flex items-center gap-1.5"
+                                                    >
+                                                        <FiShoppingBag size={13} /> Add
+                                                    </motion.span>
+                                                )}
+                                            </AnimatePresence>
                                         </motion.button>
 
                                         {/* Wishlist */}
