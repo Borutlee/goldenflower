@@ -271,14 +271,14 @@ export default function Checkout() {
                                     <div className="flex gap-2">
                                         <button
                                             type="button"
-                                            onClick={() => navigate('/signin')}
+                                            onClick={() => navigate('/auth')}
                                             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-xs font-bold uppercase tracking-wide hover:border-[#D4AF37] hover:text-[#D4AF37] transition-all"
                                         >
                                             <FiLogIn size={12} /> Sign In
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => navigate('/signup')}
+                                            onClick={() => navigate('/auth')}
                                             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-[#D4AF37] hover:bg-[#B8860B] text-white text-xs font-bold uppercase tracking-wide transition-all"
                                         >
                                             <FiUserPlus size={12} /> Sign Up

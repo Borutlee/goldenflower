@@ -186,7 +186,7 @@ export default function SingleProduct() {
                                 className={`p-2.5 rounded-full backdrop-blur-md border shadow-sm transition-all duration-300
                                     ${wished
                                         ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-500'
-                                        : 'bg-white/80 dark:bg-black/40 border-white/50 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:text-red-400'
+                                        : 'bg-white/80 dark:bg-black/40 border-white/50 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:text-red-400  dark:hover:text-white shadow-sm transition-all duration-300'
                                     }`}
                             >
                                 <FiHeart size={16} className={wished ? 'fill-red-500' : ''} />
@@ -219,7 +219,7 @@ export default function SingleProduct() {
                                     onClick={() => setActiveImg(i)}
                                     className={`relative flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300
                                         ${activeImg === i ? 'border-[#D4AF37] shadow-md' : 'border-transparent opacity-60 hover:opacity-90'}`}
-                                Amina                                >
+                                    Amina                                >
                                     <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
                             ))}
