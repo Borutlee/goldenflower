@@ -37,18 +37,18 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
     const { toggleWishlist, isWishlisted } = useWishlist();
 
     // 🌟 قراءة الـ product_id أو الـ id من الداتا الجديدة
-    const currentId = product?.product_id || product?.id;
+    const currentId = product?.legacy_id ?? product?.id ?? product?.product_id;
     const wished = isWishlisted(currentId);
 
     // دالتين فتح وقفل المودال
     const handleOpen = useCallback(() => setOpen(true), []);
     const handleClose = useCallback(() => setOpen(false), []);
-    
+
     // دالة الانتقال لصفحة السنجل برودكت (هنخليها لزرار View Details بس)
     const handleNavigate = useCallback(() => {
         navigate(`/products/${currentId}`);
     }, [navigate, currentId]);
-
+    console.log(product.db_id)
     return (
         <>
             {isOpen && (
@@ -75,7 +75,7 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
                 <div className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-3 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2">
 
                     {/* Image Container - الضغط هنا هيفتح المودال الحالي */}
-                    <div 
+                    <div
                         onClick={handleOpen}
                         className="relative h-64 sm:h-64 lg:h-72 rounded-[1.2rem] sm:rounded-[2rem] overflow-hidden bg-gray-50 dark:bg-zinc-800 mb-4 sm:mb-6 isolation-isolate cursor-pointer"
                     >

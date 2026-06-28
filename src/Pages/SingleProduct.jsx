@@ -28,7 +28,9 @@ export default function SingleProduct() {
     const [quantity, setQuantity] = useState(1);
 
     const { toggleWishlist, isWishlisted } = useWishlist();
-    const wished = isWishlisted(product?.id);
+    // 🔧 FIX: نفس منطق legacy_id بتاع ProductCard — لو المنتج جاي بشكل مختلف (UUID في id)
+    // لازم نفضّل legacy_id أولاً، وإلا المقارنة في isWishlisted بتفشل بصمت.
+    const wished = isWishlisted(product?.legacy_id ?? product?.id);
 
     const [activeTab, setActiveTab] = useState('Description');
     const [activeImg, setActiveImg] = useState(0);
@@ -219,7 +221,7 @@ export default function SingleProduct() {
                                     onClick={() => setActiveImg(i)}
                                     className={`relative flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300
                                         ${activeImg === i ? 'border-[#D4AF37] shadow-md' : 'border-transparent opacity-60 hover:opacity-90'}`}
-                                    Amina                                >
+                                >
                                     <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
                             ))}
