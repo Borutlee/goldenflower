@@ -1,5 +1,5 @@
 import { getProduct } from "../Api/ProductsAPI";
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import ProductCard from "../Components/ProductCard";
 import ProductCardSkeleton from "../Components/ProductCardSkeleton";
 import { useSearchParams } from 'react-router-dom';
@@ -12,29 +12,43 @@ function Products() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // ━━━━ States الفلتر ━━━━
+    // ━━━━ States الفلتر الأساسية ━━━━
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
     const [selectedCategories, setSelectedCategories] = useState([]);
-    const [priceRange, setPriceRange] = useState({ min: 0, max: 5000 });
-    const [currentMaxPrice, setCurrentMaxPrice] = useState(5000);
     const [inStockOnly, setInStockOnly] = useState(false);
     const [sort, setSort] = useState('');
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-    // الـ State اللي هتعرض الرقم فوق السلايدر فقط عشان نحدثه لحظياً
-    const [displayMaxPrice, setDisplayMaxPrice] = useState(5000);
-    
-    // المرجع (Ref) بتاع السلايدر للتحكم المباشر في الـ DOM منعاً للتهنيج
-    const sliderRef = useRef(null);
+    // أقصى سعر جاي من الـ API
+    const [absoluteMaxPrice, setAbsoluteMaxPrice] = useState(5000);
 
-    // دالة الـ Debounce لمنع تقطيع السيرش
+    // الـ States اللي بيكتب فيها العميل (سريعة جداً ومستحيل تهرب الفوكس)
+    const [inputMin, setInputMin] = useState('');
+    const [inputMax, setInputMax] = useState('');
+
+    // الـ States المفلترة الفعالية بعد الـ Debounce
+    const [debouncedMin, setDebouncedMin] = useState(0);
+    const [debouncedMax, setDebouncedMax] = useState(100000);
+
+    // 1. Debounce للسيرش بار
     useEffect(() => {
         const handler = setTimeout(() => {
             setDebouncedSearchQuery(searchQuery);
         }, 300);
         return () => clearTimeout(handler);
     }, [searchQuery]);
+
+    // 2. Debounce للـ Price Inputs
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            const min = inputMin === '' ? 0 : Number(inputMin);
+            const max = inputMax === '' ? absoluteMaxPrice : Number(inputMax);
+            setDebouncedMin(min);
+            setDebouncedMax(max);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [inputMin, inputMax, absoluteMaxPrice]);
 
     // جلب البيانات من الـ API
     useEffect(() => {
@@ -43,9 +57,8 @@ function Products() {
                 setProducts(res);
                 if (res.length > 0) {
                     const maxPrice = Math.max(...res.map(p => p.price || 0));
-                    setCurrentMaxPrice(maxPrice);
-                    setPriceRange(prev => ({ ...prev, max: maxPrice }));
-                    setDisplayMaxPrice(maxPrice);
+                    setAbsoluteMaxPrice(maxPrice);
+                    setDebouncedMax(maxPrice);
                 }
                 setLoading(false);
             })
@@ -69,26 +82,26 @@ function Products() {
         return [...new Set(list)];
     }, [products]);
 
-    // تفعيل اختيار الفئات المتعددة
     const handleCategoryToggle = useCallback((cat) => {
         setSelectedCategories(prev =>
             prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
         );
     }, []);
 
-    // عمل ريست لكل الفلاتر
+    // ريست الفلاتر
     const handleResetFilters = useCallback(() => {
         setSelectedCategories([]);
-        setPriceRange({ min: 0, max: currentMaxPrice });
-        setDisplayMaxPrice(currentMaxPrice);
-        if (sliderRef.current) sliderRef.current.value = currentMaxPrice;
+        setInputMin('');
+        setInputMax('');
+        setDebouncedMin(0);
+        setDebouncedMax(absoluteMaxPrice);
         setInStockOnly(false);
         setSearchQuery('');
         setDebouncedSearchQuery('');
         setSort('');
-    }, [currentMaxPrice]);
+    }, [absoluteMaxPrice]);
 
-    // ━━━━ منطق الفلترة والترتيب الذكي ━━━━
+    // ━━━━ منطق الفلترة والترتيب ━━━━
     const filteredAndSortedProducts = useMemo(() => {
         let result = [...products];
 
@@ -102,7 +115,7 @@ function Products() {
             result = result.filter(p => selectedCategories.includes(p.category));
         }
 
-        result = result.filter(p => p.price >= priceRange.min && p.price <= priceRange.max);
+        result = result.filter(p => p.price >= debouncedMin && p.price <= debouncedMax);
 
         if (inStockOnly) {
             result = result.filter(p => p.stock > 0);
@@ -112,92 +125,7 @@ function Products() {
         else if (sort === "high-to-low") result.sort((a, b) => b.price - a.price);
 
         return result;
-    }, [products, debouncedSearchQuery, selectedCategories, priceRange, inStockOnly, sort]);
-
-    // محتوى الـ Sidebar المشترك
-    const FilterSidebarContent = () => (
-        <div className="flex flex-col gap-8">
-            {/* Sorting Box */}
-            <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Sort By</h3>
-                <select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-xs font-serif italic text-gray-600 dark:text-gray-300 focus:outline-none focus:border-[#D4AF37] cursor-pointer shadow-sm"
-                >
-                    <option value="">Default Sorting</option>
-                    <option value="low-to-high">Price: Low to High</option>
-                    <option value="high-to-low">Price: High to Low</option>
-                </select>
-            </div>
-
-            {/* Categories */}
-            <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Categories</h3>
-                <div className="flex flex-col gap-2.5">
-                    {categoriesOptions.map(cat => (
-                        <label key={cat} className="flex items-center gap-3 cursor-pointer group text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                            <input
-                                type="checkbox"
-                                checked={selectedCategories.includes(cat)}
-                                onChange={() => handleCategoryToggle(cat)}
-                                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
-                            />
-                            <span className="capitalize">{cat}</span>
-                        </label>
-                    ))}
-                </div>
-            </div>
-
-            {/* Price Range Slider - الحل السحري بالـ useRef والـ DOM المباشر */}
-            <div>
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100">Price Range</h3>
-                    <span className="text-xs font-serif italic text-[#D4AF37]">Max: EGP {displayMaxPrice}</span>
-                </div>
-                <input
-                    ref={sliderRef}
-                    type="range"
-                    min="0"
-                    step = '1'
-                    max={currentMaxPrice}
-                    defaultValue={priceRange.max}
-                    // هنا بنحدث الرقم رقم برقم في الـ UI لحظياً وبنعومة تامة وبدون أي Re-render يعطل إيدك
-                    onInput={(e) => setDisplayMaxPrice(Number(e.target.value))}
-                    // الفلترة الحقيقية بتشتغل وتلف على المنتجات "فقط" أول ما تسيب السلايدر
-                    onMouseUp={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
-                    onTouchEnd={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
-                    className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
-                />
-                <div className="flex justify-between text-[11px] text-gray-400 mt-2">
-                    <span>EGP 0</span>
-                    <span>EGP {currentMaxPrice}</span>
-                </div>
-            </div>
-
-            {/* Availability */}
-            <div>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Availability</h3>
-                <label className="flex items-center gap-3 cursor-pointer text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                    <input
-                        type="checkbox"
-                        checked={inStockOnly}
-                        onChange={(e) => setInStockOnly(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
-                    />
-                    <span>In Stock Only</span>
-                </label>
-            </div>
-
-            {/* Reset Button */}
-            <button
-                onClick={handleResetFilters}
-                className="w-full py-3 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-red-500 hover:text-red-500 transition-all duration-300"
-            >
-                Clear All Filters
-            </button>
-        </div>
-    );
+    }, [products, debouncedSearchQuery, selectedCategories, debouncedMin, debouncedMax, inStockOnly, sort]);
 
     return (
         <div className="bg-gray-50 dark:bg-[#121212] min-h-screen py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 overflow-x-hidden">
@@ -220,7 +148,6 @@ function Products() {
                         </p>
                     </div>
 
-                    {/* شريط البحث */}
                     <div className="flex items-center gap-4 w-full md:w-auto md:max-w-md flex-1 md:justify-end">
                         <div className="relative w-full">
                             <input
@@ -244,9 +171,91 @@ function Products() {
 
                 {/* ━━━━ الهيكل الأساسي ━━━━ */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-                    {/* Desktop Sidebar */}
+                    
+                    {/* Desktop Sidebar (حطينا الكود جواه علطول عشان الفوكس ميهربش) */}
                     <aside className="hidden lg:block lg:col-span-1 sticky top-24 bg-white dark:bg-[#1A1A1A] rounded-[2rem] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
-                        <FilterSidebarContent />
+                        <div className="flex flex-col gap-8">
+                            {/* Sort */}
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Sort By</h3>
+                                <select
+                                    value={sort}
+                                    onChange={(e) => setSort(e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-xs font-serif italic text-gray-600 dark:text-gray-300 focus:outline-none focus:border-[#D4AF37] cursor-pointer shadow-sm"
+                                >
+                                    <option value="">Default Sorting</option>
+                                    <option value="low-to-high">Price: Low to High</option>
+                                    <option value="high-to-low">Price: High to Low</option>
+                                </select>
+                            </div>
+
+                            {/* Categories */}
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Categories</h3>
+                                <div className="flex flex-col gap-2.5">
+                                    {categoriesOptions.map(cat => (
+                                        <label key={`desktop-${cat}`} className="flex items-center gap-3 cursor-pointer group text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCategories.includes(cat)}
+                                                onChange={() => handleCategoryToggle(cat)}
+                                                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
+                                            />
+                                            <span className="capitalize">{cat}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Price Filter (الـ Inputs الثابتة والطلقة) */}
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Price Range (EGP)</h3>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        placeholder="0"
+                                        value={inputMin}
+                                        onChange={(e) => setInputMin(e.target.value)}
+                                        className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none focus:border-[#D4AF37] transition-colors shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-400"
+                                    />
+                                    <span className="text-gray-400 text-xs font-serif italic">to</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        placeholder={absoluteMaxPrice.toString()}
+                                        value={inputMax}
+                                        onChange={(e) => setInputMax(e.target.value)}
+                                        className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none focus:border-[#D4AF37] transition-colors shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-400"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-[#D4AF37] mt-2 font-serif italic tracking-wide">
+                                    Filtering: EGP {debouncedMin} - EGP {debouncedMax}
+                                </p>
+                            </div>
+
+                            {/* Availability */}
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Availability</h3>
+                                <label className="flex items-center gap-3 cursor-pointer text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={inStockOnly}
+                                        onChange={(e) => setInStockOnly(e.target.checked)}
+                                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
+                                    />
+                                    <span>In Stock Only</span>
+                                </label>
+                            </div>
+
+                            {/* Reset Button */}
+                            <button
+                                onClick={handleResetFilters}
+                                className="w-full py-3 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-red-500 hover:text-red-500 transition-all duration-300"
+                            >
+                                Clear All Filters
+                            </button>
+                        </div>
                     </aside>
 
                     {/* منطقة عرض المنتجات */}
@@ -290,7 +299,82 @@ function Products() {
                             <FiX size={20} />
                         </button>
                     </div>
-                    <FilterSidebarContent />
+                    
+                    {/* كود فلتر الموبايل منفصل تماماً عشان نضمن الثبات */}
+                    <div className="flex flex-col gap-8">
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Sort By</h3>
+                            <select
+                                value={sort}
+                                onChange={(e) => setSort(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-xs font-serif italic text-gray-600 dark:text-gray-300 focus:outline-none"
+                            >
+                                <option value="">Default Sorting</option>
+                                <option value="low-to-high">Price: Low to High</option>
+                                <option value="high-to-low">Price: High to Low</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Categories</h3>
+                            <div className="flex flex-col gap-2.5">
+                                {categoriesOptions.map(cat => (
+                                    <label key={`mobile-${cat}`} className="flex items-center gap-3 cursor-pointer text-sm text-gray-600 dark:text-gray-400">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedCategories.includes(cat)}
+                                            onChange={() => handleCategoryToggle(cat)}
+                                            className="w-4 h-4 rounded border-gray-300 text-[#D4AF37] accent-[#D4AF37]"
+                                        />
+                                        <span className="capitalize">{cat}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Price Range (EGP)</h3>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="0"
+                                    value={inputMin}
+                                    onChange={(e) => setInputMin(e.target.value)}
+                                    className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none"
+                                />
+                                <span className="text-gray-400 text-xs">to</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder={absoluteMaxPrice.toString()}
+                                    value={inputMax}
+                                    onChange={(e) => setInputMax(e.target.value)}
+                                    className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Availability</h3>
+                            <label className="flex items-center gap-3 cursor-pointer text-sm text-gray-600 dark:text-gray-400">
+                                <input
+                                    type="checkbox"
+                                    checked={inStockOnly}
+                                    onChange={(e) => setInStockOnly(e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-300 text-[#D4AF37] accent-[#D4AF37]"
+                                />
+                                <span>In Stock Only</span>
+                            </label>
+                        </div>
+
+                        <button
+                            onClick={handleResetFilters}
+                            className="w-full py-3 rounded-xl border border-dashed text-[10px] font-black uppercase tracking-widest text-gray-400"
+                        >
+                            Clear All Filters
+                        </button>
+                    </div>
                 </div>
             </div>
             
