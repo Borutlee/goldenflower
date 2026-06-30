@@ -135,6 +135,34 @@ export default function Checkout() {
 
         setLoading(true);
 
+        // 🔁 NEW: نخصم الستوك أولاً لكل منتج في الكارت، قبل أي حاجة تانية.
+        // بنستخدم decrement_stock (RPC) عشان الخصم يحصل بأمان حتى لو
+        // أكتر من عميل بيشتروا في نفس اللحظة (atomic check + update في قاعدة البيانات نفسها).
+        // لو منتج واحد فشل (مفيش كمية كافية)، نوقف العملية كلها ونرجّع
+        // أي منتجات سبق خصمها قبل الفشل ده (rollback يدوي).
+        const decrementedItems = []; // عشان نعرف نرجّعهم لو حصل فشل في النص
+
+        for (const item of cartItems) {
+            const legacyId = item.product.legacy_id ?? item.product.id;
+            const { data: success, error: stockError } = await supabase
+                .rpc('decrement_stock', { p_legacy_id: legacyId, p_quantity: item.quantity });
+
+            if (stockError || !success) {
+                // فشل: نرجّع كل اللي خصمناه قبل كده في اللوب ده
+                for (const done of decrementedItems) {
+                    await supabase.rpc('increment_stock', {
+                        p_legacy_id: done.legacyId,
+                        p_quantity: done.quantity,
+                    });
+                }
+                toast.error(`"${item.product.name}" is out of stock or quantity not available.`);
+                setLoading(false);
+                return;
+            }
+
+            decrementedItems.push({ legacyId, quantity: item.quantity });
+        }
+
         try {
             // 1. نجيب اليوزر الحالي لو مسجل دخول
             const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -163,7 +191,16 @@ export default function Checkout() {
                 }])
                 .select();
 
-            if (error) throw error;
+            if (error) {
+                // 🔁 NEW: فشل إنشاء الأوردر بعد ما خصمنا الستوك فعلاً → لازم نرجّعه
+                for (const done of decrementedItems) {
+                    await supabase.rpc('increment_stock', {
+                        p_legacy_id: done.legacyId,
+                        p_quantity: done.quantity,
+                    });
+                }
+                throw error;
+            }
 
             // 4. 🔁 لو فيه كود خصم مُطبّق وفعلاً عندنا يوزر، نسجّل إن الكود ده استُخدم
             if (appliedPromo && currentUser) {
