@@ -11,7 +11,7 @@ function Products() {
     const [searchParams] = useSearchParams();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // ━━━━ States الفلتر الأساسية ━━━━
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -23,7 +23,7 @@ function Products() {
     // أقصى سعر جاي من الـ API
     const [absoluteMaxPrice, setAbsoluteMaxPrice] = useState(5000);
 
-    // الـ States اللي بيكتب فيها العميل (سريعة جداً ومستحيل تهرب الفوكس)
+    // الـ States اللي بيكتب فيها العميل
     const [inputMin, setInputMin] = useState('');
     const [inputMax, setInputMax] = useState('');
 
@@ -106,7 +106,7 @@ function Products() {
         let result = [...products];
 
         if (debouncedSearchQuery.trim() !== '') {
-            result = result.filter(p => 
+            result = result.filter(p =>
                 (p.title || p.name || '').toLowerCase().includes(debouncedSearchQuery.toLowerCase())
             );
         }
@@ -130,7 +130,7 @@ function Products() {
     return (
         <div className="bg-gray-50 dark:bg-[#121212] min-h-screen py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 overflow-x-hidden">
             <div className="max-w-7xl mx-auto">
-                
+
                 {/* ━━━━ السطر العلوي ━━━━ */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-900 pb-8 mb-10 gap-6">
                     <div>
@@ -149,15 +149,30 @@ function Products() {
                     </div>
 
                     <div className="flex items-center gap-4 w-full md:w-auto md:max-w-md flex-1 md:justify-end">
+                        {/* Container السيرش بار */}
                         <div className="relative w-full">
                             <input
                                 type="text"
                                 placeholder="Search fragrance..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-sm focus:outline-none focus:border-[#D4AF37] text-gray-900 dark:text-white transition-all shadow-sm"
+                                className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-sm focus:outline-none focus:border-[#D4AF37] text-gray-900 dark:text-white transition-all shadow-sm"
                             />
                             <FiSearch className="absolute left-3.5 top-3.5 text-gray-400" size={16} />
+
+                            {/* زرار الـ X المعدل (لون أحمر فقط عند الهوفر وبدون خلفية) */}
+                            {searchQuery && (
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setDebouncedSearchQuery('');
+                                    }}
+                                    className="absolute right-3 top-3.5 text-gray-400 hover:text-red-500 transition-colors duration-200 cursor-pointer"
+                                    title="Clear Search"
+                                >
+                                    <FiX size={16} />
+                                </button>
+                            )}
                         </div>
 
                         <button
@@ -171,8 +186,8 @@ function Products() {
 
                 {/* ━━━━ الهيكل الأساسي ━━━━ */}
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-                    
-                    {/* Desktop Sidebar (حطينا الكود جواه علطول عشان الفوكس ميهربش) */}
+
+                    {/* Desktop Sidebar */}
                     <aside className="hidden lg:block lg:col-span-1 sticky top-24 bg-white dark:bg-[#1A1A1A] rounded-[2rem] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
                         <div className="flex flex-col gap-8">
                             {/* Sort */}
@@ -207,7 +222,7 @@ function Products() {
                                 </div>
                             </div>
 
-                            {/* Price Filter (الـ Inputs الثابتة والطلقة) */}
+                            {/* Price Filter رجع كودك القديم بالظبط */}
                             <div>
                                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Price Range (EGP)</h3>
                                 <div className="flex items-center gap-3">
@@ -217,7 +232,7 @@ function Products() {
                                         placeholder="0"
                                         value={inputMin}
                                         onChange={(e) => setInputMin(e.target.value)}
-                                        className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none focus:border-[#D4AF37] transition-colors shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-400"
+                                        className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none focus:border-[#D4AF37] transition-colors shadow-sm"
                                     />
                                     <span className="text-gray-400 text-xs font-serif italic">to</span>
                                     <input
@@ -226,12 +241,9 @@ function Products() {
                                         placeholder={absoluteMaxPrice.toString()}
                                         value={inputMax}
                                         onChange={(e) => setInputMax(e.target.value)}
-                                        className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none focus:border-[#D4AF37] transition-colors shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder-gray-400"
+                                        className="w-full px-4 py-2.5 text-xs rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white focus:outline-none focus:border-[#D4AF37] transition-colors shadow-sm"
                                     />
                                 </div>
-                                <p className="text-[10px] text-[#D4AF37] mt-2 font-serif italic tracking-wide">
-                                    Filtering: EGP {debouncedMin} - EGP {debouncedMax}
-                                </p>
                             </div>
 
                             {/* Availability */}
@@ -287,11 +299,11 @@ function Products() {
 
             {/* ━━━━ Mobile Filter Drawer ━━━━ */}
             <div className={`fixed inset-0 z-[150] lg:hidden transition-all duration-300 ${isMobileFilterOpen ? 'visible' : 'invisible pointer-events-none'}`}>
-                <div 
-                    className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isMobileFilterOpen ? 'opacity-100' : 'opacity-0'}`} 
+                <div
+                    className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isMobileFilterOpen ? 'opacity-100' : 'opacity-0'}`}
                     onClick={() => setIsMobileFilterOpen(false)}
                 />
-                
+
                 <div className={`relative flex flex-col w-full max-w-xs h-full bg-white dark:bg-[#1A1A1A] p-6 shadow-xl overflow-y-auto z-10 transition-transform duration-300 ease-out transform ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                     <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4 mb-6">
                         <h2 className="font-serif italic text-lg text-gray-900 dark:text-white">Filters</h2>
@@ -299,8 +311,7 @@ function Products() {
                             <FiX size={20} />
                         </button>
                     </div>
-                    
-                    {/* كود فلتر الموبايل منفصل تماماً عشان نضمن الثبات */}
+
                     <div className="flex flex-col gap-8">
                         <div>
                             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Sort By</h3>
@@ -377,7 +388,7 @@ function Products() {
                     </div>
                 </div>
             </div>
-            
+
         </div>
     );
 }
