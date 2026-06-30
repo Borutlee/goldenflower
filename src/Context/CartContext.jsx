@@ -6,13 +6,23 @@ export function CartProvider({ children }) {
 
     const [cartItems, setCartItems] = useState([])
 
+    // دالة مساعدة عشان نطلع الـ ID الصح للمنتج أياً كان اسمه في الداتابيز
+    const getProductId = (product) => {
+        return product?.legacy_id ?? product?.id ?? product?._id ?? product?.product_id;
+    };
+
     const addToCart = (product, quantity = 1) => {
+        if (!product) return;
+        
+        const productId = getProductId(product);
+
         setCartItems(prev => {
-            const exist = prev.find(item => item.product._id === product._id);
+            // ✅ المقارنة بقت بالـ ID الموحد والآمن
+            const exist = prev.find(item => getProductId(item.product) === productId);
 
             if (exist) {
                 return prev.map(item =>
-                    item.product._id === product._id
+                    getProductId(item.product) === productId
                         ? { ...item, quantity: item.quantity + quantity }
                         : item
                 )
@@ -20,14 +30,19 @@ export function CartProvider({ children }) {
             else {
                 return [...prev, { product, quantity }]
             }
-        }
-        )
-    }
+        });
+    };
 
-    const removeFromCart = id => setCartItems(prev => prev.filter(item => item.product._id !== id));
+    // ✅ تعديل حذف منتج عشان يستقبل الـ ID الموحد
+    const removeFromCart = id => {
+        setCartItems(prev => prev.filter(item => getProductId(item.product) !== id));
+    };
+    
     const clearCart = () => setCartItems([]);
+    
+    // ✅ تعديل تحديث الكمية عشان يقارن بالـ ID الموحد
     const updatequantity = (id, quantity) => {
-        setCartItems(prev => prev.map(item => item.product._id === id ? { ...item, quantity } : item))
+        setCartItems(prev => prev.map(item => getProductId(item.product) === id ? { ...item, quantity } : item))
     }
 
     return (

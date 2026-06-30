@@ -1,205 +1,299 @@
 import { getProduct } from "../Api/ProductsAPI";
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import ProductCard from "../Components/ProductCard";
 import ProductCardSkeleton from "../Components/ProductCardSkeleton";
-import Select from 'react-select';
 import { useSearchParams } from 'react-router-dom';
-import { useTheme } from '../Context/ThemeContext';
+import { FiSliders, FiX, FiSearch } from 'react-icons/fi';
 
 const PRODUCT_NOTES = ["Floral", "Luxury"];
 
-const sortOptions = [
-    { value: '', label: 'Default' },
-    { value: 'high-to-low', label: 'Price: High to Low' },
-    { value: 'low-to-high', label: 'Price: Low to High' },
-];
-
 function Products() {
     const [searchParams] = useSearchParams();
-    const { isDark } = useTheme();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [selectedCategory, setSelectedCategory] = useState('All');
+    
+    // ━━━━ States الفلتر ━━━━
+    const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [priceRange, setPriceRange] = useState({ min: 0, max: 5000 });
+    const [currentMaxPrice, setCurrentMaxPrice] = useState(5000);
+    const [inStockOnly, setInStockOnly] = useState(false);
     const [sort, setSort] = useState('');
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
+    // الـ State اللي هتعرض الرقم فوق السلايدر فقط عشان نحدثه لحظياً
+    const [displayMaxPrice, setDisplayMaxPrice] = useState(5000);
+    
+    // المرجع (Ref) بتاع السلايدر للتحكم المباشر في الـ DOM منعاً للتهنيج
+    const sliderRef = useRef(null);
+
+    // دالة الـ Debounce لمنع تقطيع السيرش
     useEffect(() => {
-        const categoryFromUrl = searchParams.get('category');
-        if (categoryFromUrl) {
-            setSelectedCategory(categoryFromUrl);
-        }
-    }, [searchParams]);
+        const handler = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
 
-    const customStyles = {
-        control: (base, state) => ({
-            ...base,
-            background: isDark ? "#1f2937" : "#ffffff",
-            borderColor: state.isFocused ? "#D4AF37" : isDark ? "#374151" : "#d1d5db",
-            borderRadius: "0.75rem",
-            padding: "2px",
-            boxShadow: "none",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            "&:hover": { borderColor: "#D4AF37" }
-        }),
-        menu: (base) => ({
-            ...base,
-            background: isDark ? "#1f2937" : "#ffffff",
-            borderRadius: "0.75rem",
-            overflow: "hidden",
-            zIndex: 50,
-            border: isDark ? "none" : "1px solid #e5e7eb",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)"
-        }),
-        option: (base, state) => ({
-            ...base,
-            background: state.isSelected ? "#D4AF37" : state.isFocused
-                ? isDark ? "#374151" : "#f3f4f6"
-                : "transparent",
-            color: state.isSelected ? "white" : isDark ? "#d1d5db" : "#374151",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontFamily: "serif",
-            "&:active": { background: "#D4AF37" }
-        }),
-        singleValue: (base) => ({
-            ...base,
-            color: "#D4AF37",
-            fontStyle: "italic",
-            fontSize: "12px",
-            fontFamily: "serif"
-        }),
-        placeholder: (base) => ({
-            ...base,
-            color: isDark ? "#9ca3af" : "#6b7280",
-            fontSize: "12px",
-            fontFamily: "serif"
-        }),
-        indicatorSeparator: () => ({ display: 'none' }),
-        dropdownIndicator: (base) => ({
-            ...base,
-            color: "#D4AF37",
-            "&:hover": { color: "#D4AF37" }
-        })
-    };
-
-    // 1️⃣ استخراج أسماء الكاتيجوريز كنصوص فقط لمنع الأيرور
-    const alloptions = useMemo(() => {
-        const categorylist = products
-            .map(item => typeof item.category === 'object' ? item.category?.name : item.category)
-            .filter(Boolean);
-        
-        const uniqueCategories = [...new Set(categorylist)];
-        return ["All", ...uniqueCategories];
-    }, [products]);
-
-    // 2️⃣ فلترة المنتجات بمقارنة النصوص بشكل صحيح
-    const sortedProducts = useMemo(() => {
-        const filtered = selectedCategory === 'All'
-            ? products
-            : products.filter(p => {
-                const catName = typeof p.category === 'object' ? p.category?.name : p.category;
-                return catName === selectedCategory;
-            });
-
-        return [...filtered].sort((a, b) => {
-            if (sort === "low-to-high") return a.price - b.price;
-            if (sort === "high-to-low") return b.price - a.price;
-            return 0;
-        });
-    }, [products, selectedCategory, sort]);
-
-    const handleCategoryChange = useCallback((cat) => setSelectedCategory(cat), []);
-
+    // جلب البيانات من الـ API
     useEffect(() => {
         getProduct()
             .then(res => {
                 setProducts(res);
+                if (res.length > 0) {
+                    const maxPrice = Math.max(...res.map(p => p.price || 0));
+                    setCurrentMaxPrice(maxPrice);
+                    setPriceRange(prev => ({ ...prev, max: maxPrice }));
+                    setDisplayMaxPrice(maxPrice);
+                }
                 setLoading(false);
             })
             .catch(err => {
-                console.log(err);
+                console.error(err);
                 setLoading(false);
             });
     }, []);
 
-    return (
-        <div className="bg-gray-50 dark:bg-[#121212] min-h-screen py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+    // ربط فئة الـ URL
+    useEffect(() => {
+        const categoryFromUrl = searchParams.get('category');
+        if (categoryFromUrl) {
+            setSelectedCategories([categoryFromUrl]);
+        }
+    }, [searchParams]);
 
-            {/* Header */}
-            <div className="text-center mb-16">
-                <h1 className="text-4xl font-serif font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-300">
-                    Our Collection
-                </h1>
-                <div className="h-1 w-20 bg-yellow-600 mx-auto" />
-                <p className="mt-4 text-gray-600 dark:text-gray-400 italic transition-colors duration-300">
-                    Handpicked flowers and fashion for your golden moments
-                </p>
+    // استخراج الفئات الفريدة
+    const categoriesOptions = useMemo(() => {
+        const list = products.map(item => item.category).filter(Boolean);
+        return [...new Set(list)];
+    }, [products]);
+
+    // تفعيل اختيار الفئات المتعددة
+    const handleCategoryToggle = useCallback((cat) => {
+        setSelectedCategories(prev =>
+            prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+        );
+    }, []);
+
+    // عمل ريست لكل الفلاتر
+    const handleResetFilters = useCallback(() => {
+        setSelectedCategories([]);
+        setPriceRange({ min: 0, max: currentMaxPrice });
+        setDisplayMaxPrice(currentMaxPrice);
+        if (sliderRef.current) sliderRef.current.value = currentMaxPrice;
+        setInStockOnly(false);
+        setSearchQuery('');
+        setDebouncedSearchQuery('');
+        setSort('');
+    }, [currentMaxPrice]);
+
+    // ━━━━ منطق الفلترة والترتيب الذكي ━━━━
+    const filteredAndSortedProducts = useMemo(() => {
+        let result = [...products];
+
+        if (debouncedSearchQuery.trim() !== '') {
+            result = result.filter(p => 
+                (p.title || p.name || '').toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+            );
+        }
+
+        if (selectedCategories.length > 0) {
+            result = result.filter(p => selectedCategories.includes(p.category));
+        }
+
+        result = result.filter(p => p.price >= priceRange.min && p.price <= priceRange.max);
+
+        if (inStockOnly) {
+            result = result.filter(p => p.stock > 0);
+        }
+
+        if (sort === "low-to-high") result.sort((a, b) => a.price - b.price);
+        else if (sort === "high-to-low") result.sort((a, b) => b.price - a.price);
+
+        return result;
+    }, [products, debouncedSearchQuery, selectedCategories, priceRange, inStockOnly, sort]);
+
+    // محتوى الـ Sidebar المشترك
+    const FilterSidebarContent = () => (
+        <div className="flex flex-col gap-8">
+            {/* Sorting Box */}
+            <div>
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Sort By</h3>
+                <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-xs font-serif italic text-gray-600 dark:text-gray-300 focus:outline-none focus:border-[#D4AF37] cursor-pointer shadow-sm"
+                >
+                    <option value="">Default Sorting</option>
+                    <option value="low-to-high">Price: Low to High</option>
+                    <option value="high-to-low">Price: High to Low</option>
+                </select>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row justify-evenly items-center sm:items-end gap-4 mb-10 max-w-7xl mx-auto px-4">
+            {/* Categories */}
+            <div>
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Categories</h3>
+                <div className="flex flex-col gap-2.5">
+                    {categoriesOptions.map(cat => (
+                        <label key={cat} className="flex items-center gap-3 cursor-pointer group text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                            <input
+                                type="checkbox"
+                                checked={selectedCategories.includes(cat)}
+                                onChange={() => handleCategoryToggle(cat)}
+                                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
+                            />
+                            <span className="capitalize">{cat}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
 
-                {/* Category Pills */}
-                <div className="relative w-full sm:w-auto">
-                    <label className="block text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-2 ml-1 font-bold">
-                        category
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                        {alloptions.map(cat => {
-                            const isActive = selectedCategory === cat;
-                            return (
-                                <button
-                                    key={cat}
-                                    onClick={() => handleCategoryChange(cat)}
-                                    className={`py-2 px-4 rounded-full border text-[12px] tracking-widest capitalize transition-all duration-200
-                                        ${isActive
-                                            ? "bg-yellow-600 text-white border-yellow-600"
-                                            : "bg-transparent text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:border-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                                        }`}
-                                >
-                                    {/* ✅ هنا تم التأكد أن cat عبارة عن String صريح وليس أوبجكت */}
-                                    {cat} 
-                                </button>
-                            );
-                        })}
+            {/* Price Range Slider - الحل السحري بالـ useRef والـ DOM المباشر */}
+            <div>
+                <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100">Price Range</h3>
+                    <span className="text-xs font-serif italic text-[#D4AF37]">Max: EGP {displayMaxPrice}</span>
+                </div>
+                <input
+                    ref={sliderRef}
+                    type="range"
+                    min="0"
+                    step = '1'
+                    max={currentMaxPrice}
+                    defaultValue={priceRange.max}
+                    // هنا بنحدث الرقم رقم برقم في الـ UI لحظياً وبنعومة تامة وبدون أي Re-render يعطل إيدك
+                    onInput={(e) => setDisplayMaxPrice(Number(e.target.value))}
+                    // الفلترة الحقيقية بتشتغل وتلف على المنتجات "فقط" أول ما تسيب السلايدر
+                    onMouseUp={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+                    onTouchEnd={(e) => setPriceRange(prev => ({ ...prev, max: Number(e.target.value) }))}
+                    className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
+                />
+                <div className="flex justify-between text-[11px] text-gray-400 mt-2">
+                    <span>EGP 0</span>
+                    <span>EGP {currentMaxPrice}</span>
+                </div>
+            </div>
+
+            {/* Availability */}
+            <div>
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-900 dark:text-gray-100 mb-3">Availability</h3>
+                <label className="flex items-center gap-3 cursor-pointer text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                    <input
+                        type="checkbox"
+                        checked={inStockOnly}
+                        onChange={(e) => setInStockOnly(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-[#D4AF37] focus:ring-[#D4AF37] accent-[#D4AF37]"
+                    />
+                    <span>In Stock Only</span>
+                </label>
+            </div>
+
+            {/* Reset Button */}
+            <button
+                onClick={handleResetFilters}
+                className="w-full py-3 rounded-xl border border-dashed border-gray-200 dark:border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-red-500 hover:text-red-500 transition-all duration-300"
+            >
+                Clear All Filters
+            </button>
+        </div>
+    );
+
+    return (
+        <div className="bg-gray-50 dark:bg-[#121212] min-h-screen py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300 overflow-x-hidden">
+            <div className="max-w-7xl mx-auto">
+                
+                {/* ━━━━ السطر العلوي ━━━━ */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-100 dark:border-gray-900 pb-8 mb-10 gap-6">
+                    <div>
+                        <h1 className="text-3xl sm:text-4xl font-serif italic text-gray-900 dark:text-white mb-2">
+                            Our Collection
+                        </h1>
+                        <p className="text-gray-400 text-xs">
+                            Discover luxury niche perfumes curated for your golden moments.
+                        </p>
+                    </div>
+
+                    <div className="hidden xl:flex flex-1 justify-center px-8 text-center">
+                        <p className="font-serif italic text-sm text-[#D4AF37]/80 tracking-wide max-w-md border-x border-gray-800/50 px-6 py-1">
+                            "Where elegance meets fragrance, and every scent tells a golden story."
+                        </p>
+                    </div>
+
+                    {/* شريط البحث */}
+                    <div className="flex items-center gap-4 w-full md:w-auto md:max-w-md flex-1 md:justify-end">
+                        <div className="relative w-full">
+                            <input
+                                type="text"
+                                placeholder="Search fragrance..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-sm focus:outline-none focus:border-[#D4AF37] text-gray-900 dark:text-white transition-all shadow-sm"
+                            />
+                            <FiSearch className="absolute left-3.5 top-3.5 text-gray-400" size={16} />
+                        </div>
+
+                        <button
+                            onClick={() => setIsMobileFilterOpen(true)}
+                            className="lg:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1A1A1A] text-xs font-bold text-gray-600 dark:text-gray-300 shadow-sm whitespace-nowrap"
+                        >
+                            <FiSliders size={14} /> Filters
+                        </button>
                     </div>
                 </div>
 
-                {/* Sort By */}
-                <div className="relative w-full sm:w-64">
-                    <label className="block text-[10px] uppercase tracking-[0.3em] text-gray-400 mb-2 ml-1 font-bold">
-                        Sort By
-                    </label>
-                    <Select
-                        options={sortOptions}
-                        defaultValue={sortOptions[0]}
-                        onChange={(selected) => setSort(selected.value)}
-                        styles={customStyles}
-                        isSearchable={false}
-                        placeholder="Select Sort"
-                        className="react-select-container"
-                        classNamePrefix="react-select"
-                    />
+                {/* ━━━━ الهيكل الأساسي ━━━━ */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+                    {/* Desktop Sidebar */}
+                    <aside className="hidden lg:block lg:col-span-1 sticky top-24 bg-white dark:bg-[#1A1A1A] rounded-[2rem] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+                        <FilterSidebarContent />
+                    </aside>
+
+                    {/* منطقة عرض المنتجات */}
+                    <main className="lg:col-span-3">
+                        {filteredAndSortedProducts.length === 0 && !loading ? (
+                            <div className="text-center py-20 bg-white dark:bg-[#1A1A1A] rounded-[2.5rem] border border-gray-100 dark:border-gray-800">
+                                <p className="font-serif italic text-gray-400 text-lg">No products match your selected criteria.</p>
+                                <button onClick={handleResetFilters} className="mt-4 text-xs font-bold uppercase tracking-wider text-[#D4AF37] underline">Reset Filters</button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                                {loading
+                                    ? Array.from({ length: 6 }).map((_, i) => (
+                                        <ProductCardSkeleton key={i} />
+                                    ))
+                                    : filteredAndSortedProducts.map((item, index) => (
+                                        <ProductCard
+                                            key={item.id}
+                                            product={item}
+                                            index={index}
+                                            notes={PRODUCT_NOTES}
+                                        />
+                                    ))}
+                            </div>
+                        )}
+                    </main>
                 </div>
-
             </div>
 
-            {/* Grid */}
-            <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
-                {loading
-                    ? Array.from({ length: 8 }).map((_, i) => (
-                        <ProductCardSkeleton key={i} />
-                    ))
-                    : sortedProducts.map((item, index) => (
-                        <ProductCard
-                            key={item.id}
-                            product={item}
-                            index={index}
-                            notes={PRODUCT_NOTES}
-                        />
-                    ))}
+            {/* ━━━━ Mobile Filter Drawer ━━━━ */}
+            <div className={`fixed inset-0 z-[150] lg:hidden transition-all duration-300 ${isMobileFilterOpen ? 'visible' : 'invisible pointer-events-none'}`}>
+                <div 
+                    className={`fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${isMobileFilterOpen ? 'opacity-100' : 'opacity-0'}`} 
+                    onClick={() => setIsMobileFilterOpen(false)}
+                />
+                
+                <div className={`relative flex flex-col w-full max-w-xs h-full bg-white dark:bg-[#1A1A1A] p-6 shadow-xl overflow-y-auto z-10 transition-transform duration-300 ease-out transform ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4 mb-6">
+                        <h2 className="font-serif italic text-lg text-gray-900 dark:text-white">Filters</h2>
+                        <button onClick={() => setIsMobileFilterOpen(false)} className="p-1 text-gray-400 hover:text-black dark:hover:text-white">
+                            <FiX size={20} />
+                        </button>
+                    </div>
+                    <FilterSidebarContent />
+                </div>
             </div>
-
+            
         </div>
     );
 }

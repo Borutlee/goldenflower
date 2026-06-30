@@ -12,7 +12,10 @@ const ProductModal = ({ isOpen, onClose, product }) => {
     const timeoutRef = useRef(null);
 
     const { toggleWishlist, isWishlisted } = useWishlist();
-    const wished = isWishlisted(product?.id);
+
+    // ✅ تصليح 1: البحث في الـ Wishlist بالهوية الصحيحة (legacy_id أولاً)
+    const currentId = product?.legacy_id ?? product?.id ?? product?.product_id;
+    const wished = isWishlisted(currentId);
 
     const navigate = useNavigate();
     const { addToCart } = useCart();
@@ -22,15 +25,19 @@ const ProductModal = ({ isOpen, onClose, product }) => {
         return (parseFloat(product?.price || 0) * quantity).toFixed(2);
     }, [product, quantity]);
 
+    // ✅ تصليح 2: التوجيه لصفحة المنتج باستخدام الـ legacy_id عشان الصفحة متقفلش وتضرب
     const handleViewDetails = useCallback(() => {
         onClose();
-        navigate(`/products/${product.id}`);
+        if (product) {
+            const targetId = product.legacy_id ?? product.id ?? product.product_id;
+            navigate(`/products/${targetId}`);
+        }
     }, [onClose, navigate, product]);
 
     const handleDecrement = useCallback(() => setQuantity(q => Math.max(1, q - 1)), []);
     const handleIncrement = useCallback(() => setQuantity(q => q + 1), []);
     const handleWish = useCallback(() => toggleWishlist(product), [product, toggleWishlist]);
-    
+
     // 🌟 الدالة المعدلة: إضافة بدون قفل المودال
     const handleAddToCart = useCallback(() => {
         if (!product) return;
@@ -40,6 +47,7 @@ const ProductModal = ({ isOpen, onClose, product }) => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
         timeoutRef.current = setTimeout(() => {
+
             setAdded(false);
         }, 2000);
     }, [addToCart, product, quantity]);
@@ -51,6 +59,8 @@ const ProductModal = ({ isOpen, onClose, product }) => {
     }, []);
 
     if (!product) return null;
+
+    const FALLBACK_IMAGE = 'https://via.placeholder.com/400x500?text=Golden+Flower';
 
     return (
         <AnimatePresence>
@@ -77,8 +87,9 @@ const ProductModal = ({ isOpen, onClose, product }) => {
                         {/* ── الصورة ── */}
                         <div className="relative w-full md:w-[45%] flex-shrink-0 overflow-hidden bg-gray-50 dark:bg-gray-800">
                             <div className="w-full aspect-[4/3] md:aspect-auto md:h-full">
+                                {/* ✅ تصليح 3: دعم جلب أول صورة من مصفوفة الصور الجديدة أو الصورة الفردية القديمة */}
                                 <img
-                                    src={product.image || product.img}
+                                    src={product.images?.[0] || product.image || product.img || FALLBACK_IMAGE}
                                     alt={product.title || product.name}
                                     className="w-full h-full object-cover"
                                     loading="lazy"
@@ -156,7 +167,7 @@ const ProductModal = ({ isOpen, onClose, product }) => {
                                 <div className="flex items-center justify-between mb-3">
                                     <div>
                                         <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest">Total</p>
-                                        <p className="text-xl font-extrabold text-gray-900 dark:text-white transition-colors duration-300">${totalPrice}</p>
+                                        <p className="text-xl font-extrabold text-gray-900 dark:text-white transition-colors duration-300">EGP {totalPrice}</p>
                                     </div>
                                     <div className="flex gap-2">
                                         {/* Add to Cart Button المطور */}
@@ -166,24 +177,24 @@ const ProductModal = ({ isOpen, onClose, product }) => {
                                             className={`flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full font-bold uppercase text-[10px] tracking-[0.15em] transition-all duration-300 min-w-[100px] shadow-sm ${added
                                                 ? 'bg-green-500 text-white hover:bg-green-600'
                                                 : 'bg-gray-900 dark:bg-[#D4AF37] text-white dark:text-gray-900 hover:bg-[#D4AF37] dark:hover:bg-[#B8860B]'
-                                            }`}
+                                                }`}
                                         >
                                             <AnimatePresence mode="wait">
                                                 {added ? (
-                                                    <motion.span 
-                                                        key="check" 
-                                                        initial={{ opacity: 0, y: 4 }} 
-                                                        animate={{ opacity: 1, y: 0 }} 
+                                                    <motion.span
+                                                        key="check"
+                                                        initial={{ opacity: 0, y: 4 }}
+                                                        animate={{ opacity: 1, y: 0 }}
                                                         exit={{ opacity: 0, y: -4 }}
                                                         className="flex items-center gap-1.5"
                                                     >
                                                         <FiCheck size={13} /> Added!
                                                     </motion.span>
                                                 ) : (
-                                                    <motion.span 
-                                                        key="add" 
-                                                        initial={{ opacity: 0, y: 4 }} 
-                                                        animate={{ opacity: 1, y: 0 }} 
+                                                    <motion.span
+                                                        key="add"
+                                                        initial={{ opacity: 0, y: 4 }}
+                                                        animate={{ opacity: 1, y: 0 }}
                                                         exit={{ opacity: 0, y: -4 }}
                                                         className="flex items-center gap-1.5"
                                                     >

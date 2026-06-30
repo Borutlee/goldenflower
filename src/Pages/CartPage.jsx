@@ -7,7 +7,7 @@ export default function Cart() {
     const navigate = useNavigate();
     const { cartItems, removeFromCart, clearCart, updatequantity } = useCart();
 
-    // ━━━━ Functions (رجعت لأصلها تماماً بدون تعديل) ━━━━
+    // ━━━━ Functions (بقت بتستقبل الـ id الموحد مباشرة) ━━━━
     const handleRemove = (id) => removeFromCart(id);
     const handleIncrement = (id, quantity) => updatequantity(id, quantity + 1);
     const handleDecrement = (id, currentQty) => {
@@ -76,73 +76,77 @@ export default function Cart() {
                     {/* ── Cart Items ── */}
                     <div className="lg:col-span-2 flex flex-col gap-4">
                         <AnimatePresence mode='popLayout'>
-                            {cartItems.map((item, index) => (
-                                <motion.div
-                                    // 🌟 التعديل الوحيد هنا: استخدمنا الـ index مع الـ _id عشان نضمن إن الـ key مش undefined ومن غير ما نلعب في الداتا
-                                    key={item.product?._id || `item-${index}`}
-                                    layout
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
-                                    transition={{ duration: 0.3 }}
-                                    className="bg-white dark:bg-[#1A1A1A] rounded-[2rem] border border-gray-100 dark:border-gray-800 p-4 sm:p-5 flex gap-4 items-center shadow-sm hover:shadow-md transition-all duration-300"
-                                >
-                                    {/* Thumbnail */}
-                                    <div
-                                        onClick={() => navigate(`/products/${item.product._id}`)}
-                                        className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-50 dark:bg-[#242424] flex-shrink-0 cursor-pointer"
+                            {cartItems.map((item, index) => {
+                                // 🌟 استخراج الـ ID الموحد هنا عشان نغذي بيه كل العمليات تحت بأمان
+                                const pId = item.product?.legacy_id ?? item.product?.id ?? item.product?._id;
+
+                                return (
+                                    <motion.div
+                                        key={pId || `item-${index}`}
+                                        layout
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+                                        transition={{ duration: 0.3 }}
+                                        className="bg-white dark:bg-[#1A1A1A] rounded-[2rem] border border-gray-100 dark:border-gray-800 p-4 sm:p-5 flex gap-4 items-center shadow-sm hover:shadow-md transition-all duration-300"
                                     >
-                                        <img
-                                            src={item.product.image || item.product.img}
-                                            alt={item.product.title}
-                                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
-                                        />
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37] mb-1 opacity-80">
-                                            {item.product.category}
-                                        </p>
-                                        <h3 className="font-serif italic text-gray-900 dark:text-white text-base sm:text-lg leading-tight truncate mb-1">
-                                            {item.product.title || item.product.name}
-                                        </h3>
-                                        <p className="text-gray-900 dark:text-gray-300 font-bold text-sm">
-                                            ${item.product.price}
-                                        </p>
-                                    </div>
-
-                                    {/* Controls */}
-                                    <div className="flex flex-col items-end gap-3 flex-shrink-0">
-                                        <motion.button
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            onClick={() => handleRemove(item.product._id)}
-                                            className="p-2 text-gray-300 hover:text-red-400 dark:hover:text-red-500 transition-colors"
+                                        {/* Thumbnail */}
+                                        <div
+                                            onClick={() => navigate(`/products/${pId}`)}
+                                            className="w-20 h-20 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-gray-50 dark:bg-[#242424] flex-shrink-0 cursor-pointer"
                                         >
-                                            <FiTrash2 size={16} />
-                                        </motion.button>
-
-                                        <div className="flex items-center gap-2 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-[#242424] p-1.5 transition-colors">
-                                            <button
-                                                onClick={() => handleDecrement(item.product._id, item.quantity)}
-                                                className="p-1 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                                            >
-                                                <FiMinus size={12} />
-                                            </button>
-                                            <span className="w-6 text-center text-xs font-black text-gray-900 dark:text-white">
-                                                {item.quantity}
-                                            </span>
-                                            <button
-                                                onClick={() => handleIncrement(item.product._id, item.quantity)}
-                                                className="p-1 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                                            >
-                                                <FiPlus size={12} />
-                                            </button>
+                                            <img
+                                                src={item.product.image || item.product.img}
+                                                alt={item.product.title}
+                                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
+                                            />
                                         </div>
-                                    </div>
-                                </motion.div>
-                            ))}
+
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#D4AF37] mb-1 opacity-80">
+                                                {item.product.category}
+                                            </p>
+                                            <h3 className="font-serif italic text-gray-900 dark:text-white text-base sm:text-lg leading-tight truncate mb-1">
+                                                {item.product.title || item.product.name}
+                                            </h3>
+                                            <p className="text-gray-900 dark:text-gray-300 font-bold text-sm">
+                                                EGP {item.product.price}
+                                            </p>
+                                        </div>
+
+                                        {/* Controls */}
+                                        <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                                            <motion.button
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={() => handleRemove(pId)}
+                                                className="p-2 text-gray-300 hover:text-red-400 dark:hover:text-red-500 transition-colors"
+                                            >
+                                                <FiTrash2 size={16} />
+                                            </motion.button>
+
+                                            <div className="flex items-center gap-2 border border-gray-100 dark:border-gray-800 rounded-xl bg-gray-50 dark:bg-[#242424] p-1.5 transition-colors">
+                                                <button
+                                                    onClick={() => handleDecrement(pId, item.quantity)}
+                                                    className="p-1 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                                                >
+                                                    <FiMinus size={12} />
+                                                </button>
+                                                <span className="w-6 text-center text-xs font-black text-gray-900 dark:text-white">
+                                                    {item.quantity}
+                                                </span>
+                                                <button
+                                                    onClick={() => handleIncrement(pId, item.quantity)}
+                                                    className="p-1 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+                                                >
+                                                    <FiPlus size={12} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </AnimatePresence>
 
                         <button
@@ -162,7 +166,7 @@ export default function Cart() {
                             <div className="flex flex-col gap-4 mb-8">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-400">Subtotal</span>
-                                    <span className="text-gray-900 dark:text-gray-200 font-bold">${totalPrice}</span>
+                                    <span className="text-gray-900 dark:text-gray-200 font-bold">EGP {totalPrice}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-400">Shipping</span>
@@ -172,7 +176,7 @@ export default function Cart() {
                                 <div className="flex justify-between items-end">
                                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Total Amount</span>
                                     <span className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tighter">
-                                        ${totalPrice}
+                                        EGP {totalPrice}
                                     </span>
                                 </div>
                             </div>

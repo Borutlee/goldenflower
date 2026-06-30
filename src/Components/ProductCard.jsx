@@ -138,7 +138,7 @@ const ProductCard = memo(({ product, size, index = 0 }) => {
 
                         {/* Price */}
                         <p className="text-gray-900 dark:text-[#D4AF37] font-bold text-base sm:text-lg mb-3 sm:mb-5 transition-colors duration-300">
-                            ${product.price}
+                        EGP {product.price}
                         </p>
 
                         {/* Action Button - الزرار ده هيفضل ينقل لصفحة السنجل برودكت الأساسية */}

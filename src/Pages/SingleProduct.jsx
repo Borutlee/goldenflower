@@ -372,7 +372,7 @@ export default function SingleProduct() {
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Total</p>
-                            <p className="text-3xl font-extrabold text-gray-900 dark:text-white transition-colors">${totalPrice}</p>
+                            <p className="text-3xl font-extrabold text-gray-900 dark:text-white transition-colors">EGP {totalPrice}</p>
                         </div>
                     </div>
 
