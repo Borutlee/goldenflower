@@ -36,6 +36,8 @@ export default function SingleProduct() {
     const [activeImg, setActiveImg] = useState(0);
     const [added, setAdded] = useState(false);
     const [shared, setShared] = useState(false);
+    const [isGalleryHovered, setIsGalleryHovered] = useState(false); // 🔧 NEW: لإظهار الـ overlay بتاع الـ thumbnails عند الـ hover بس
+    const [hoveredThumb, setHoveredThumb] = useState(null); // 🔧 NEW: أي thumbnail بالظبط عليه hover دلوقتي (عشان يبان واضح لوحده)
 
     const { addToCart } = useCart();
 
@@ -167,7 +169,12 @@ export default function SingleProduct() {
                     transition={{ duration: 0.6, ease: 'easeOut' }}
                     className="flex flex-col gap-4"
                 >
-                    <div className="relative w-full aspect-square rounded-[2.5rem] overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-300">
+                    <div
+                        className="relative w-full aspect-square rounded-[2.5rem] overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-300"
+                        // 🔧 NEW: الـ hover بقى على الصورة الرئيسية نفسها بس (مش على منطقة منفصلة تحتها)
+                        onMouseEnter={() => setIsGalleryHovered(true)}
+                        onMouseLeave={() => { setIsGalleryHovered(false); setHoveredThumb(null); }}
+                    >
                         <AnimatePresence mode="wait">
                             <motion.img
                                 key={activeImg}
@@ -181,7 +188,7 @@ export default function SingleProduct() {
                             />
                         </AnimatePresence>
 
-                        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+                        <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
                             <motion.button
                                 whileTap={{ scale: 0.9 }}
                                 onClick={handleWish}
@@ -204,29 +211,68 @@ export default function SingleProduct() {
                         </div>
 
                         {product.category && (
-                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full z-10">
+                            <div className="absolute top-4 left-4 bg-white/90 dark:bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full z-20">
                                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">
                                     {typeof product.category === 'object' ? product.category.name : product.category}
                                 </span>
                             </div>
                         )}
-                    </div>
 
-                    {/* Thumbnails */}
-                    {images.length > 1 && images[0] !== '' && (
-                        <div className="flex gap-3">
-                            {images.map((img, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => setActiveImg(i)}
-                                    className={`relative flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300
-                                        ${activeImg === i ? 'border-[#D4AF37] shadow-md' : 'border-transparent opacity-60 hover:opacity-90'}`}
-                                >
-                                    <img src={img} alt="" className="w-full h-full object-cover" />
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                        {/* 🔧 NEW: عداد "1 / 4" — بيختفي وقت الـ hover عشان مايتلخبطش مع الـ thumbnails overlay */}
+                        {images.length > 1 && images[0] !== '' && (
+                            <AnimatePresence>
+                                {!isGalleryHovered && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full z-20"
+                                    >
+                                        <span className="text-[10px] font-bold text-white tracking-wider">
+                                            {activeImg + 1} / {images.length}
+                                        </span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        )}
+
+                        {/* 🔧 NEW: شريط الـ thumbnails — overlay أبيض شفاف جدًا فوق الصورة نفسها في أسفلها،
+                            بيظهر بس وقت الـ hover على الصورة الرئيسية. كل thumbnail شفاف بشكل افتراضي،
+                            ولما نعمل hover عليه لوحده، الطبقة الشفافة اللي فوقه تختفي (opacity 0) فتبان الصورة واضحة. */}
+                        {images.length > 1 && images[0] !== '' && (
+                            <AnimatePresence>
+                                {isGalleryHovered && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 12 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 12 }}
+                                        transition={{ duration: 0.25, ease: 'easeOut' }}
+                                        className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-md z-10"
+                                    >
+                                        <div className="flex gap-2">
+                                            {images.map((img, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setActiveImg(i)}
+                                                    onMouseEnter={() => setHoveredThumb(i)}
+                                                    onMouseLeave={() => setHoveredThumb(null)}
+                                                    className={`relative w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors duration-300
+                                                        ${activeImg === i ? 'border-[#D4AF37]' : 'border-white/40'}`}
+                                                >
+                                                    <img src={img} alt="" className="w-full h-full object-cover" />
+                                                    {/* الطبقة الشفافة نفسها: ظاهرة بشكل افتراضي، تختفي (opacity-0) عند الـ hover على الـ thumbnail ده بالذات */}
+                                                    <div
+                                                        className={`absolute inset-0 bg-white/50 transition-opacity duration-300
+                                                            ${hoveredThumb === i || activeImg === i ? 'opacity-0' : 'opacity-100'}`}
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        )}
+                    </div>
                 </motion.div>
 
                 {/* ── Product Info ── */}
@@ -381,7 +427,7 @@ export default function SingleProduct() {
                         <motion.button
                             onClick={handleAddToCart}
                             whileTap={{ scale: 0.97 }}
-                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md ${added
+                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md EGP{added
                                 ? 'bg-green-500 text-white'
                                 : 'bg-gray-900 dark:bg-[#D4AF37] text-white hover:bg-[#D4AF37] dark:hover:bg-[#B8860B]'
                                 }`}
