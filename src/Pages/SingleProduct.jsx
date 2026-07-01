@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     FiArrowLeft, FiHeart, FiShoppingBag,
-    FiStar, FiMinus, FiPlus, FiShare2, FiCheck
+    FiStar, FiMinus, FiPlus, FiShare2, FiCheck,
+    FiChevronLeft, FiChevronRight 
 } from 'react-icons/fi';
 import { GiFlowerPot, GiWaterDrop, GiPerfumeBottle } from 'react-icons/gi';
 import { getProductById, getProduct } from '../Api/ProductsAPI';
@@ -28,16 +29,14 @@ export default function SingleProduct() {
     const [quantity, setQuantity] = useState(1);
 
     const { toggleWishlist, isWishlisted } = useWishlist();
-    // 🔧 FIX: نفس منطق legacy_id بتاع ProductCard — لو المنتج جاي بشكل مختلف (UUID في id)
-    // لازم نفضّل legacy_id أولاً، وإلا المقارنة في isWishlisted بتفشل بصمت.
     const wished = isWishlisted(product?.legacy_id ?? product?.id);
 
     const [activeTab, setActiveTab] = useState('Description');
     const [activeImg, setActiveImg] = useState(0);
     const [added, setAdded] = useState(false);
     const [shared, setShared] = useState(false);
-    const [isGalleryHovered, setIsGalleryHovered] = useState(false); // 🔧 NEW: لإظهار الـ overlay بتاع الـ thumbnails عند الـ hover بس
-    const [hoveredThumb, setHoveredThumb] = useState(null); // 🔧 NEW: أي thumbnail بالظبط عليه hover دلوقتي (عشان يبان واضح لوحده)
+    const [isGalleryHovered, setIsGalleryHovered] = useState(false);
+    const [hoveredThumb, setHoveredThumb] = useState(null);
 
     const { addToCart } = useCart();
 
@@ -101,26 +100,34 @@ export default function SingleProduct() {
         }
     }, [product]);
 
-    // 🌟 استخراج روابط الصور بشكل آمن ودفاعي
     const getProductImageSrc = (imgField) => {
         if (!imgField) return '';
-        // لو الحقل عبارة عن أوبجكت (زي الكاتيجوري)، اسحب منه رابط الصورة جواه
         if (typeof imgField === 'object') {
             return imgField.image || imgField.url || '';
         }
         return imgField;
     };
 
-    const images = product
-        ? product.images && Array.isArray(product.images) && product.images.length > 0
+    const images = useMemo(() => {
+        if (!product) return [];
+        return product.images && Array.isArray(product.images) && product.images.length > 0
             ? product.images.map(img => getProductImageSrc(img))
-            : [getProductImageSrc(product.image) || getProductImageSrc(product.img) || getProductImageSrc(product?.category?.image)]
-        : [];
+            : [getProductImageSrc(product.image) || getProductImageSrc(product.img) || getProductImageSrc(product?.category?.image)];
+    }, [product]);
+
+    const handleNextImg = useCallback(() => {
+        if (images.length <= 1) return;
+        setActiveImg(prev => (prev + 1) % images.length);
+    }, [images]);
+
+    const handlePrevImg = useCallback(() => {
+        if (images.length <= 1) return;
+        setActiveImg(prev => (prev - 1 + images.length) % images.length);
+    }, [images]);
 
     const priceAsNumber = product ? parseFloat(product.price) : 0;
     const totalPrice = (!isNaN(priceAsNumber) ? priceAsNumber * quantity : 0).toFixed(2);
 
-    // ━━━━ Loading Skeleton ━━━━
     if (loading) return (
         <div className="min-h-screen bg-gray-50 dark:bg-[#121212] py-12 px-4 sm:px-8 lg:px-16 transition-colors duration-300">
             <div className="max-w-7xl mx-auto">
@@ -163,15 +170,9 @@ export default function SingleProduct() {
             <section className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-16 py-10 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
 
                 {/* ── Image Gallery ── */}
-                <motion.div
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                    className="flex flex-col gap-4"
-                >
+                <div className="flex flex-col gap-4">
                     <div
-                        className="relative w-full aspect-square rounded-[2.5rem] overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-300"
-                        // 🔧 NEW: الـ hover بقى على الصورة الرئيسية نفسها بس (مش على منطقة منفصلة تحتها)
+                        className="relative w-full aspect-square rounded-[2.5rem] overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-300 group/gallery"
                         onMouseEnter={() => setIsGalleryHovered(true)}
                         onMouseLeave={() => { setIsGalleryHovered(false); setHoveredThumb(null); }}
                     >
@@ -180,13 +181,36 @@ export default function SingleProduct() {
                                 key={activeImg}
                                 src={images[activeImg] || 'https://via.placeholder.com/600'}
                                 alt={product.title || product.name}
-                                initial={{ opacity: 0, scale: 1.04 }}
+                                initial={{ opacity: 0, scale: 1.02 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.97 }}
-                                transition={{ duration: 0.4, ease: 'easeOut' }}
+                                exit={{ opacity: 0, scale: 0.98 }}
+                                transition={{ duration: 0.3, ease: 'easeOut' }}
                                 className="w-full h-full object-cover"
                             />
                         </AnimatePresence>
+
+                        {/* ── تعديل أزرار الأسهم هنا لتظهر على الموبايل ── */}
+                        {images.length > 1 && (
+                            <>
+                                {/* السهم الشمال */}
+                                <button
+                                    onClick={handlePrevImg}
+                                    className={`absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-md border border-white/50 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-[#D4AF37] hover:text-white dark:hover:bg-[#D4AF37] shadow-md z-20 transition-all duration-300 
+                                    ${isGalleryHovered ? 'lg:opacity-100 lg:translate-x-0' : 'opacity-100 lg:opacity-0 lg:-translate-x-4'}`}
+                                >
+                                    <FiChevronLeft size={20} />
+                                </button>
+
+                                {/* السهم اليمين */}
+                                <button
+                                    onClick={handleNextImg}
+                                    className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-md border border-white/50 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-[#D4AF37] hover:text-white dark:hover:bg-[#D4AF37] shadow-md z-20 transition-all duration-300 
+                                    ${isGalleryHovered ? 'lg:opacity-100 lg:translate-x-0' : 'opacity-100 lg:opacity-0 lg:translate-x-4'}`}
+                                >
+                                    <FiChevronRight size={20} />
+                                </button>
+                            </>
+                        )}
 
                         <div className="absolute top-4 right-4 flex flex-col gap-2 z-20">
                             <motion.button
@@ -195,7 +219,7 @@ export default function SingleProduct() {
                                 className={`p-2.5 rounded-full backdrop-blur-md border shadow-sm transition-all duration-300
                                     ${wished
                                         ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-500'
-                                        : 'bg-white/80 dark:bg-black/40 border-white/50 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:text-red-400  dark:hover:text-white shadow-sm transition-all duration-300'
+                                        : 'bg-white/80 dark:bg-black/40 border-white/50 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:text-red-400 dark:hover:text-white shadow-sm'
                                     }`}
                             >
                                 <FiHeart size={16} className={wished ? 'fill-red-500' : ''} />
@@ -218,71 +242,37 @@ export default function SingleProduct() {
                             </div>
                         )}
 
-                        {/* 🔧 NEW: عداد "1 / 4" — بيختفي وقت الـ hover عشان مايتلخبطش مع الـ thumbnails overlay */}
                         {images.length > 1 && images[0] !== '' && (
-                            <AnimatePresence>
-                                {!isGalleryHovered && (
-                                    <motion.div
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full z-20"
-                                    >
-                                        <span className="text-[10px] font-bold text-white tracking-wider">
-                                            {activeImg + 1} / {images.length}
-                                        </span>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            <div className={`absolute bottom-4 right-4 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full z-20 transition-opacity duration-300 ${isGalleryHovered ? 'lg:opacity-0' : 'opacity-100'}`}>
+                                <span className="text-[10px] font-bold text-white tracking-wider">
+                                    {activeImg + 1} / {images.length}
+                                </span>
+                            </div>
                         )}
 
-                        {/* 🔧 NEW: شريط الـ thumbnails — overlay أبيض شفاف جدًا فوق الصورة نفسها في أسفلها،
-                            بيظهر بس وقت الـ hover على الصورة الرئيسية. كل thumbnail شفاف بشكل افتراضي،
-                            ولما نعمل hover عليه لوحده، الطبقة الشفافة اللي فوقه تختفي (opacity 0) فتبان الصورة واضحة. */}
                         {images.length > 1 && images[0] !== '' && (
-                            <AnimatePresence>
-                                {isGalleryHovered && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 12 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 12 }}
-                                        transition={{ duration: 0.25, ease: 'easeOut' }}
-                                        className="absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-md z-10"
-                                    >
-                                        <div className="flex gap-2">
-                                            {images.map((img, i) => (
-                                                <button
-                                                    key={i}
-                                                    onClick={() => setActiveImg(i)}
-                                                    onMouseEnter={() => setHoveredThumb(i)}
-                                                    onMouseLeave={() => setHoveredThumb(null)}
-                                                    className={`relative w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors duration-300
-                                                        ${activeImg === i ? 'border-[#D4AF37]' : 'border-white/40'}`}
-                                                >
-                                                    <img src={img} alt="" className="w-full h-full object-cover" />
-                                                    {/* الطبقة الشفافة نفسها: ظاهرة بشكل افتراضي، تختفي (opacity-0) عند الـ hover على الـ thumbnail ده بالذات */}
-                                                    <div
-                                                        className={`absolute inset-0 bg-white/50 transition-opacity duration-300
-                                                            ${hoveredThumb === i || activeImg === i ? 'opacity-0' : 'opacity-100'}`}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            <div className={`absolute bottom-0 left-0 right-0 p-3 bg-white/10 backdrop-blur-md z-10 transition-all duration-300 ${isGalleryHovered ? 'opacity-100 translate-y-0' : 'opacity-0 lg:opacity-0 translate-y-4 lg:translate-y-4 pointer-events-none lg:pointer-events-none'}`}>
+                                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                                    {images.map((img, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => setActiveImg(i)}
+                                            onMouseEnter={() => setHoveredThumb(i)}
+                                            onMouseLeave={() => setHoveredThumb(null)}
+                                            className={`relative w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${activeImg === i ? 'border-[#D4AF37]' : 'border-white/40'}`}
+                                        >
+                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                            <div className={`absolute inset-0 bg-white/50 transition-opacity duration-200 ${hoveredThumb === i || activeImg === i ? 'opacity-0' : 'opacity-100'}`} />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         )}
                     </div>
-                </motion.div>
+                </div>
 
                 {/* ── Product Info ── */}
-                <motion.div
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-                    className="flex flex-col justify-center"
-                >
-                    {/* Rating */}
+                <div className="flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-3">
                         <div className="flex gap-0.5">
                             {[...Array(5)].map((_, i) => (
@@ -339,10 +329,10 @@ export default function SingleProduct() {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
-                            initial={{ opacity: 0, y: 6 }}
+                            initial={{ opacity: 0, y: 4 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            transition={{ duration: 0.25 }}
+                            exit={{ opacity: 0, y: -4 }}
+                            transition={{ duration: 0.2 }}
                             className="min-h-[70px] mb-7"
                         >
                             {activeTab === 'Description' && (
@@ -395,7 +385,7 @@ export default function SingleProduct() {
                                             ? 'bg-gray-900 dark:bg-[#D4AF37] text-white border-gray-900 dark:border-[#D4AF37]'
                                             : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
                                         }`}
-                                >
+                                                                    >
                                     {s}
                                 </button>
                             ))}
@@ -427,7 +417,7 @@ export default function SingleProduct() {
                         <motion.button
                             onClick={handleAddToCart}
                             whileTap={{ scale: 0.97 }}
-                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md EGP{added
+                            className={`flex-1 flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] transition-all duration-300 shadow-md ${added
                                 ? 'bg-green-500 text-white'
                                 : 'bg-gray-900 dark:bg-[#D4AF37] text-white hover:bg-[#D4AF37] dark:hover:bg-[#B8860B]'
                                 }`}
@@ -459,7 +449,7 @@ export default function SingleProduct() {
                             <FiHeart size={18} className={wished ? 'fill-red-500' : ''} />
                         </motion.button>
                     </div>
-                </motion.div>
+                </div>
             </section>
 
             {/* Related Products */}
